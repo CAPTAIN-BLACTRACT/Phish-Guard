@@ -4,4 +4,8 @@ export { SimulatorPage } from "./SimulatorPage";
 export { LeaderboardPage } from "./LeaderboardPage";
 export { GalleryPage } from "./GalleryPage";
 export { ProgressPage } from "./ProgressPage";
+export { InformationPage } from "./InformationPage";
+export { AdminPage } from "./AdminPage";
+export { ProfilePage } from "./ProfilePage";
+export { AILearningPage } from "./AILearningPage";
 export { default as LoginPage } from "./LoginPage";

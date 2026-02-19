@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { T } from "../styles";
 import { LB_DATA } from "../constants";
+import { db } from "../firebase/config";
+import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 
 const TABS = ["🌍 Global", "👥 This Week", "🏫 Class"];
 
@@ -216,7 +218,7 @@ function LightningStreaks() {
   useEffect(() => {
     let id = 0;
     const spawn = () => {
-      const newId = id++;
+      const newId = Math.random().toString(36).substring(2, 11);
       const colors = ["rgba(0,245,255,", "rgba(0,255,157,", "rgba(213,0,249,", "rgba(255,23,68,"];
       const c = colors[Math.floor(Math.random() * colors.length)];
       const h = 80 + Math.random() * 220;
@@ -260,10 +262,10 @@ function CyberBackground() {
 
       {/* Ambient orbs */}
       {[
-        { w: 800, h: 800, bg: "rgba(0,245,255,0.09)", top: -250, left: -250,  delay: "0s"  },
-        { w: 600, h: 600, bg: "rgba(213,0,249,0.1)",  top: "40%", right: -220, delay: "-3s" },
+        { w: 800, h: 800, bg: "rgba(0,245,255,0.09)", top: -250, left: -250, delay: "0s" },
+        { w: 600, h: 600, bg: "rgba(213,0,249,0.1)", top: "40%", right: -220, delay: "-3s" },
         { w: 500, h: 500, bg: "rgba(0,255,157,0.06)", bottom: "5%", left: "15%", delay: "-6s" },
-        { w: 380, h: 380, bg: "rgba(255,23,68,0.07)", top: "55%", left: "8%",  delay: "-2s" },
+        { w: 380, h: 380, bg: "rgba(255,23,68,0.07)", top: "55%", left: "8%", delay: "-2s" },
       ].map((o, i) => (
         <div key={i} style={{
           position: "fixed", borderRadius: "50%", filter: "blur(120px)",
@@ -300,6 +302,26 @@ function CyberBackground() {
 // ─── LEADERBOARD PAGE ─────────────────────────────────────────────────────────
 export function LeaderboardPage() {
   const [tab, setTab] = useState(0);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, "users"), orderBy("xp", "desc"), limit(20));
+    const unsub = onSnapshot(q, (snap) => {
+      if (snap.empty) {
+        setLeaderboard(LB_DATA); // Fallback if empty
+      } else {
+        const data = snap.docs.map((doc, idx) => ({
+          id: doc.id,
+          rank: idx + 1,
+          ...doc.data()
+        }));
+        setLeaderboard(data);
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
 
   return (
     <div style={{
@@ -342,10 +364,10 @@ export function LeaderboardPage() {
         {/* ── Stat cards ── */}
         <div style={{ display: "flex", gap: 20, marginBottom: 36, flexWrap: "wrap" }}>
           {[
-            { val: "#47",  color: "#ffd600", lbl: "Your Rank",  icon: "🏅" },
-            { val: "1,250",color: "#00f5ff", lbl: "Your XP",    icon: "⚡" },
+            { val: "#47", color: "#ffd600", lbl: "Your Rank", icon: "🏅" },
+            { val: "1,250", color: "#00f5ff", lbl: "Your XP", icon: "⚡" },
             { val: "🔥 5", color: "#ff6d00", lbl: "Day Streak", icon: null },
-            { val: "87%",  color: "#00ff9d", lbl: "Accuracy",   icon: "🎯" },
+            { val: "87%", color: "#00ff9d", lbl: "Accuracy", icon: "🎯" },
           ].map(({ val, color, lbl }) => (
             <div
               key={lbl}
@@ -449,23 +471,23 @@ export function LeaderboardPage() {
               </tr>
             </thead>
             <tbody>
-              {LB_DATA.map((u, rowIdx) => {
+              {leaderboard.map((u, rowIdx) => {
                 const rankColor =
                   u.rank === 1 ? "#ffd600" :
-                  u.rank === 2 ? "#b0bec5" :
-                  u.rank === 3 ? "#ff9e80" : "#e0f7fa";
+                    u.rank === 2 ? "#b0bec5" :
+                      u.rank === 3 ? "#ff9e80" : "#e0f7fa";
 
                 const rankBg =
-                  u.rank === 1 ? "rgba(255,214,0,.06)"  :
-                  u.rank === 2 ? "rgba(176,190,197,.04)" :
-                  u.rank === 3 ? "rgba(255,158,128,.05)" : "transparent";
+                  u.rank === 1 ? "rgba(255,214,0,.06)" :
+                    u.rank === 2 ? "rgba(176,190,197,.04)" :
+                      u.rank === 3 ? "rgba(255,158,128,.05)" : "transparent";
 
                 return (
                   <tr
                     key={u.rank}
                     style={{
                       background: u.isYou ? "rgba(0,245,255,.05)" : rankBg,
-                      borderTop:  u.isYou ? "1px solid rgba(0,245,255,.2)" : "none",
+                      borderTop: u.isYou ? "1px solid rgba(0,245,255,.2)" : "none",
                       borderBottom: u.isYou ? "1px solid rgba(0,245,255,.1)" : "none",
                       transition: "background .2s",
                       animation: `rowIn .4s ${rowIdx * 0.05}s ease both`,

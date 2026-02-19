@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { T } from "../styles";
 import { GALLERY_DATA } from "../constants";
+import { getGalleryEntries, addGalleryEntry, likeGalleryEntry, uploadGalleryImage } from "../firebase";
+import { useAuth } from "../context";
 
 // ─── CANVAS: MATRIX RAIN ─────────────────────────────────────────────────────
 function MatrixCanvas() {
@@ -214,7 +216,7 @@ function LightningStreaks() {
   useEffect(() => {
     let id = 0;
     const spawn = () => {
-      const newId = id++;
+      const newId = Math.random().toString(36).substring(2, 11);
       const colors = ["rgba(0,245,255,", "rgba(0,255,157,", "rgba(213,0,249,", "rgba(255,23,68,"];
       const c = colors[Math.floor(Math.random() * colors.length)];
       const h = 80 + Math.random() * 220;
@@ -258,10 +260,10 @@ function CyberBackground() {
 
       {/* Ambient orbs */}
       {[
-        { w: 800, h: 800, bg: "rgba(0,245,255,0.09)", top: -250,  left: -250,  delay: "0s"  },
-        { w: 600, h: 600, bg: "rgba(213,0,249,0.1)",  top: "40%", right: -220, delay: "-3s" },
+        { w: 800, h: 800, bg: "rgba(0,245,255,0.09)", top: -250, left: -250, delay: "0s" },
+        { w: 600, h: 600, bg: "rgba(213,0,249,0.1)", top: "40%", right: -220, delay: "-3s" },
         { w: 500, h: 500, bg: "rgba(0,255,157,0.06)", bottom: "5%", left: "15%", delay: "-6s" },
-        { w: 380, h: 380, bg: "rgba(255,23,68,0.07)", top: "55%", left: "8%",  delay: "-2s" },
+        { w: 380, h: 380, bg: "rgba(255,23,68,0.07)", top: "55%", left: "8%", delay: "-2s" },
       ].map((o, i) => (
         <div key={i} style={{
           position: "fixed", borderRadius: "50%", filter: "blur(120px)",
@@ -297,23 +299,66 @@ function CyberBackground() {
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function tagStyle(status) {
-  if (status === "phish")     return T.tagPhish;
-  if (status === "review")    return T.tagReview;
+  if (status === "phish") return T.tagPhish;
+  if (status === "review") return T.tagReview;
   return T.tagDismissed;
 }
 function tagText(status) {
-  if (status === "phish")     return "🎣 Confirmed Phish";
-  if (status === "review")    return "🔍 Under Review";
+  if (status === "phish") return "🎣 Confirmed Phish";
+  if (status === "review") return "🔍 Under Review";
   return "✓ Dismissed";
 }
 function thumbBg(type) {
   if (type === "email") return "linear-gradient(135deg,rgba(0,12,26,.98),rgba(0,5,14,1))";
-  if (type === "sms")   return "linear-gradient(135deg,rgba(14,0,26,.98),rgba(0,5,14,1))";
-  return                       "linear-gradient(135deg,rgba(26,10,0,.98),rgba(0,5,14,1))";
+  if (type === "sms") return "linear-gradient(135deg,rgba(14,0,26,.98),rgba(0,5,14,1))";
+  return "linear-gradient(135deg,rgba(26,10,0,.98),rgba(0,5,14,1))";
 }
 
 // ─── SUBMIT MODAL ─────────────────────────────────────────────────────────────
 function SubmitModal({ onClose, showToast }) {
+  const { user } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [file, setFile] = useState(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    category: "Email Phishing"
+  });
+
+  const handleUpload = async () => {
+    if (!user) { showToast("Please sign in to submit!", "ng"); return; }
+    if (!file) { showToast("Please select a screenshot!", "ng"); return; }
+    if (!formData.title) { showToast("Title is required!", "ng"); return; }
+
+    setBusy(true);
+    try {
+      // 1. Upload file to Storage
+      let imageURL = null;
+      if (file) {
+        imageURL = await uploadGalleryImage(user.uid, file, (pct) => setProgress(pct));
+      }
+
+      // 2. Add entry to Firestore
+      await addGalleryEntry({
+        uid: user.uid,
+        displayName: user.displayName || "Agent",
+        title: formData.title,
+        description: formData.description,
+        imageURL,
+        tags: [formData.category.toLowerCase()]
+      });
+
+      showToast("🚀 Phishing example reported and shared!", "ok");
+      onClose();
+    } catch (err) {
+      console.error(err);
+      showToast("Upload failed: " + err.message, "ng");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div
       onClick={onClose}
@@ -333,13 +378,26 @@ function SubmitModal({ onClose, showToast }) {
           📤 Submit Phishing Example
         </div>
 
+        {busy && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: ".75rem", color: "#00f5ff", marginBottom: 4 }}>Uploading: {progress}%</div>
+            <div style={{ height: 4, background: "rgba(0,245,255,.1)", borderRadius: 2 }}>
+              <div style={{ height: "100%", background: "#00f5ff", width: `${progress}%`, transition: "width .2s" }} />
+            </div>
+          </div>
+        )}
+
         <div style={{ padding: "10px 14px", background: "rgba(255,109,0,.06)", border: "1px solid rgba(255,109,0,.2)", borderRadius: 4, fontSize: ".78rem", color: "#ff6d00", marginBottom: 16, lineHeight: 1.6 }}>
           ⚠️ Only submit real phishing attempts. Do not include personal information.
         </div>
 
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: "block", fontSize: ".78rem", color: "#546e7a", marginBottom: 7, fontFamily: "Share Tech Mono, monospace" }}>Category</label>
-          <select style={{ width: "100%", padding: "10px 14px", background: "rgba(0,8,18,.95)", border: "1px solid rgba(0,245,255,.15)", borderRadius: 3, color: "#e0f7fa", fontFamily: "Share Tech Mono, monospace" }}>
+          <select
+            value={formData.category}
+            onChange={e => setFormData({ ...formData, category: e.target.value })}
+            style={{ width: "100%", padding: "10px 14px", background: "rgba(0,8,18,.95)", border: "1px solid rgba(0,245,255,.15)", borderRadius: 3, color: "#e0f7fa", fontFamily: "Share Tech Mono, monospace" }}
+          >
             {["Email Phishing", "SMS / Smishing", "Fake Website", "Voice / Vishing"].map((o) => (
               <option key={o}>{o}</option>
             ))}
@@ -347,42 +405,51 @@ function SubmitModal({ onClose, showToast }) {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", fontSize: ".78rem", color: "#546e7a", marginBottom: 7, fontFamily: "Share Tech Mono, monospace" }}>Short Description</label>
+          <label style={{ display: "block", fontSize: ".78rem", color: "#546e7a", marginBottom: 7, fontFamily: "Share Tech Mono, monospace" }}>Short Title</label>
           <input
             type="text"
-            placeholder="e.g. Fake PayPal billing email with spoofed domain"
+            value={formData.title}
+            onChange={e => setFormData({ ...formData, title: e.target.value })}
+            placeholder="e.g. Fake PayPal billing email"
             style={{ width: "100%", padding: "10px 14px", background: "rgba(0,8,18,.95)", border: "1px solid rgba(0,245,255,.15)", borderRadius: 3, color: "#e0f7fa", fontFamily: "Share Tech Mono, monospace" }}
           />
         </div>
 
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: "block", fontSize: ".78rem", color: "#546e7a", marginBottom: 7, fontFamily: "Share Tech Mono, monospace" }}>Screenshot Upload</label>
-          <div style={{ border: "1px dashed rgba(0,245,255,.2)", borderRadius: 4, padding: 28, textAlign: "center", cursor: "pointer", fontSize: ".85rem", color: "#546e7a" }}>
-            <span style={{ color: "#00f5ff" }}>📎 Click to upload screenshot</span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => setFile(e.target.files[0])}
+            style={{ display: "none" }}
+            id="file-upload"
+          />
+          <label htmlFor="file-upload" style={{ display: "block", border: "1px dashed rgba(0,245,255,.2)", borderRadius: 4, padding: 28, textAlign: "center", cursor: "pointer", fontSize: ".85rem", color: file ? "#00f5ff" : "#546e7a" }}>
+            {file ? `📎 ${file.name}` : "📎 Click to select screenshot"}
             <br />
             <small style={{ fontSize: ".75rem" }}>PNG, JPG — Max 5 MB</small>
-          </div>
+          </label>
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", fontSize: ".78rem", color: "#546e7a", marginBottom: 7, fontFamily: "Share Tech Mono, monospace" }}>Additional Notes (optional)</label>
+          <label style={{ display: "block", fontSize: ".78rem", color: "#546e7a", marginBottom: 7, fontFamily: "Share Tech Mono, monospace" }}>Additional Notes</label>
           <textarea
             rows={3}
+            value={formData.description}
+            onChange={e => setFormData({ ...formData, description: e.target.value })}
             placeholder="Any additional context about this phishing attempt..."
             style={{ width: "100%", padding: "10px 14px", background: "rgba(0,8,18,.95)", border: "1px solid rgba(0,245,255,.15)", borderRadius: 3, color: "#e0f7fa", fontFamily: "Share Tech Mono, monospace", resize: "vertical" }}
           />
         </div>
 
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-          <button style={T.btnG} onClick={onClose}>Cancel</button>
+          <button style={T.btnG} onClick={onClose} disabled={busy}>Cancel</button>
           <button
             style={T.btnP}
-            onClick={() => {
-              onClose();
-              showToast("✅ Submission received! Our team will review it shortly.", "ok");
-            }}
+            onClick={handleUpload}
+            disabled={busy}
           >
-            Submit Example
+            {busy ? `Uploading...` : "Submit Example"}
           </button>
         </div>
       </div>
@@ -391,7 +458,6 @@ function SubmitModal({ onClose, showToast }) {
 }
 
 // ─── GALLERY CARD ─────────────────────────────────────────────────────────────
-// Extracted into its own component so useState is called at the top level (not inside .map())
 function GalleryCard({ g, liked, likeCount, onToggleLike, onFavourite }) {
   const [hov, setHov] = useState(false);
 
@@ -401,96 +467,78 @@ function GalleryCard({ g, liked, likeCount, onToggleLike, onFavourite }) {
       onMouseLeave={() => setHov(false)}
       style={{
         ...T.card,
-        overflow:    "hidden",
-        transition:  "all .3s",
+        overflow: "hidden",
+        transition: "all .3s",
         borderColor: hov ? "rgba(0,245,255,.35)" : "rgba(0,245,255,0.12)",
-        transform:   hov ? "translateY(-3px)" : "none",
-        boxShadow:   hov ? "0 0 30px rgba(0,245,255,.07)" : "none",
+        transform: hov ? "translateY(-3px)" : "none",
+        boxShadow: hov ? "0 0 30px rgba(0,245,255,.07)" : "none",
       }}
     >
       {/* Thumbnail */}
       <div style={{
-        padding:      12,
-        fontFamily:   "Share Tech Mono, monospace",
-        fontSize:     ".68rem",
-        lineHeight:   1.6,
-        whiteSpace:   "pre-wrap",
-        background:   thumbBg(g.type),
+        background: thumbBg(g.tags?.[0] || g.type),
         borderBottom: "1px solid rgba(0,245,255,.08)",
-        minHeight:    90,
-        color:        "#546e7a",
-        position:     "relative",
-        overflow:     "hidden",
+        height: 160,
+        position: "relative",
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}>
-        {g.thumb}
+        {g.imageURL ? (
+          <img src={g.imageURL} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <div style={{ fontFamily: "Share Tech Mono, monospace", fontSize: ".65rem", color: "#546e7a", padding: 12 }}>{g.thumb}</div>
+        )}
+
         {/* channel badge */}
         <span style={{
-          position:   "absolute",
-          top:        8,
-          right:      8,
-          padding:    "2px 8px",
+          position: "absolute",
+          top: 8,
+          right: 8,
+          padding: "2px 8px",
           borderRadius: 2,
-          fontSize:   ".62rem",
+          fontSize: ".62rem",
           fontFamily: "Share Tech Mono, monospace",
           letterSpacing: "0.1em",
           textTransform: "uppercase",
-          background: g.type === "email" ? "rgba(0,245,255,.1)"
-                    : g.type === "sms"   ? "rgba(213,0,249,.1)"
-                    : "rgba(255,109,0,.1)",
-          border:     g.type === "email" ? "1px solid rgba(0,245,255,.25)"
-                    : g.type === "sms"   ? "1px solid rgba(213,0,249,.25)"
-                    : "1px solid rgba(255,109,0,.25)",
-          color:      g.type === "email" ? "#00f5ff"
-                    : g.type === "sms"   ? "#d500f9"
-                    : "#ff6d00",
+          background: "rgba(0,245,255,.2)",
+          backdropFilter: "blur(4px)",
+          border: "1px solid rgba(0,245,255,.3)",
+          color: "#00f5ff",
         }}>
-          {g.type === "email" ? "📧 Email" : g.type === "sms" ? "💬 SMS" : "🌐 Web"}
+          {g.tags?.[0] || g.type || "Threat"}
         </span>
       </div>
 
       {/* Meta */}
       <div style={{ padding: "14px 16px" }}>
-        <div style={{ fontFamily: "Orbitron, sans-serif", fontSize: ".85rem", fontWeight: 700, marginBottom: 6 }}>
+        <div style={{ fontFamily: "Orbitron, sans-serif", fontSize: ".85rem", fontWeight: 700, marginBottom: 6, color: "#e0f7fa" }}>
           {g.title}
         </div>
-        <div style={{ fontSize: ".82rem", color: "#546e7a", marginBottom: 12, lineHeight: 1.5 }}>
-          {g.caption}
+        <div style={{ fontSize: ".82rem", color: "#546e7a", marginBottom: 12, lineHeight: 1.5, height: 40, overflow: "hidden" }}>
+          {g.description || g.caption}
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={tagStyle(g.status)}>{tagText(g.status)}</span>
+          <span style={tagStyle(g.status || "phish")}>{tagText(g.status || "phish")}</span>
 
           <div style={{ display: "flex", gap: 6 }}>
             <button
               onClick={() => onToggleLike(g.id)}
               style={{
-                background:   liked ? "rgba(255,23,68,.08)" : "transparent",
-                border:       `1px solid ${liked ? "rgba(255,23,68,.4)" : "rgba(255,255,255,.08)"}`,
+                background: liked ? "rgba(255,23,68,.08)" : "transparent",
+                border: `1px solid ${liked ? "rgba(255,23,68,.4)" : "rgba(255,255,255,.08)"}`,
                 borderRadius: 3,
-                color:        liked ? "#ff1744" : "#546e7a",
-                fontSize:     ".78rem",
-                padding:      "4px 10px",
-                cursor:       "pointer",
-                fontFamily:   "Share Tech Mono, monospace",
-                transition:   "all .2s",
+                color: liked ? "#ff1744" : "#546e7a",
+                fontSize: ".78rem",
+                padding: "4px 10px",
+                cursor: "pointer",
+                fontFamily: "Share Tech Mono, monospace",
+                transition: "all .2s",
               }}
             >
               👍 {likeCount}
-            </button>
-            <button
-              onClick={onFavourite}
-              style={{
-                background:   "transparent",
-                border:       "1px solid rgba(255,255,255,.08)",
-                borderRadius: 3,
-                color:        "#546e7a",
-                fontSize:     ".82rem",
-                padding:      "4px 10px",
-                cursor:       "pointer",
-                transition:   "all .2s",
-              }}
-            >
-              ★
             </button>
           </div>
         </div>
@@ -501,49 +549,61 @@ function GalleryCard({ g, liked, likeCount, onToggleLike, onFavourite }) {
 
 // ─── GALLERY PAGE ─────────────────────────────────────────────────────────────
 export function GalleryPage({ showToast }) {
-  const [search,       setSearch]       = useState("");
-  const [typeFilter,   setTypeFilter]   = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [likes,        setLikes]        = useState(() =>
-    Object.fromEntries(GALLERY_DATA.map((g) => [g.id, g.likes]))
-  );
-  const [liked,        setLiked]        = useState({});
-  const [showModal,    setShowModal]    = useState(false);
+  const { user } = useAuth();
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState({});
+  const [showModal, setShowModal] = useState(false);
 
-  const filtered = GALLERY_DATA.filter((g) => {
-    if (search       && !g.title.toLowerCase().includes(search) && !g.caption.toLowerCase().includes(search)) return false;
-    if (typeFilter   && g.type   !== typeFilter)   return false;
-    if (statusFilter && g.status !== statusFilter) return false;
+  // Load from Firestore
+  useEffect(() => {
+    getGalleryEntries()
+      .then(data => {
+        // Merge with static data for demo if empty, or just use live data
+        setEntries(data.length > 0 ? data : GALLERY_DATA);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = entries.filter((g) => {
+    const text = (g.title + (g.description || "") + (g.caption || "")).toLowerCase();
+    if (search && !text.includes(search)) return false;
+    if (typeFilter && !(g.tags || []).includes(typeFilter.toLowerCase()) && g.type !== typeFilter) return false;
     return true;
   });
 
-  const toggleLike = (id) => {
+  const toggleLike = async (id) => {
+    if (!user) { showToast("Sign in to like!", "ng"); return; }
     const wasLiked = !!liked[id];
     setLiked((p) => ({ ...p, [id]: !wasLiked }));
-    setLikes((p) => ({ ...p, [id]: p[id] + (wasLiked ? -1 : 1) }));
+    setEntries(prev => prev.map(e => e.id === id ? { ...e, likes: (e.likes || 0) + (wasLiked ? -1 : 1) } : e));
+
+    // Persist to DB
+    if (!wasLiked) await likeGalleryEntry(id);
   };
 
   const selectStyle = {
-    padding:      "10px 14px",
-    background:   "rgba(0,8,18,.95)",
-    border:       "1px solid rgba(0,245,255,.15)",
+    padding: "10px 14px",
+    background: "rgba(0,8,18,.95)",
+    border: "1px solid rgba(0,245,255,.15)",
     borderRadius: 3,
-    color:        "#546e7a",
-    fontFamily:   "Share Tech Mono, monospace",
-    fontSize:     ".82rem",
-    outline:      "none",
-    cursor:       "pointer",
+    color: "#546e7a",
+    fontFamily: "Share Tech Mono, monospace",
+    fontSize: ".82rem",
+    outline: "none",
+    cursor: "pointer",
   };
 
   return (
     <div style={{
       ...T.page,
-      background:  "#000509",
-      minHeight:   "100vh",
-      position:    "relative",
-      overflowX:   "hidden",
+      background: "#000509",
+      minHeight: "100vh",
+      position: "relative",
+      overflowX: "hidden",
     }}>
-      {/* ── Keyframes ── */}
       <style>{`
         @keyframes orbF           { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-40px) scale(1.08)} }
         @keyframes scanlineScroll { 0%{background-position:0 0} 100%{background-position:0 100px} }
@@ -553,13 +613,9 @@ export function GalleryPage({ showToast }) {
         @keyframes cardIn         { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
 
-      {/* ── Full background stack ── */}
       <CyberBackground />
 
-      {/* ── Page content ── */}
       <div style={{ position: "relative", zIndex: 2, padding: "80px 60px 60px" }}>
-
-        {/* Header */}
         <div style={T.secLbl}>
           <span style={{ color: "rgba(0,245,255,0.4)" }}>//</span> COMMUNITY GALLERY
         </div>
@@ -570,7 +626,6 @@ export function GalleryPage({ showToast }) {
           Browse user-submitted phishing screenshots. Learn from real attacks.
         </p>
 
-        {/* ── Filters ── */}
         <div style={{ display: "flex", gap: 12, marginBottom: 36, flexWrap: "wrap" }}>
           <input
             value={search}
@@ -588,20 +643,13 @@ export function GalleryPage({ showToast }) {
               outline: "none",
             }}
           />
-          <select value={typeFilter}   onChange={(e) => setTypeFilter(e.target.value)}   style={selectStyle}>
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={selectStyle}>
             <option value="">All Channels</option>
-            <option value="email">Email</option>
-            <option value="sms">SMS</option>
-            <option value="web">Fake Website</option>
-          </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={selectStyle}>
-            <option value="">All Status</option>
-            <option value="phish">Confirmed Phish</option>
-            <option value="review">Under Review</option>
-            <option value="dismissed">Dismissed</option>
+            <option value="email phishing">Email</option>
+            <option value="sms / smishing">SMS</option>
+            <option value="fake website">Fake Website</option>
           </select>
 
-          {/* Result count */}
           <div style={{
             display: "flex", alignItems: "center",
             padding: "0 14px",
@@ -613,37 +661,35 @@ export function GalleryPage({ showToast }) {
             background: "rgba(0,8,18,.6)",
             whiteSpace: "nowrap",
           }}>
-            {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+            {loading ? "Scanning..." : `${filtered.length} entries`}
           </div>
         </div>
 
-        {/* ── Cards grid ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
           {filtered.map((g, idx) => (
-            <div key={g.id} style={{ animation: `cardIn .4s ${idx * 0.06}s ease both` }}>
+            <div key={g.id || idx} style={{ animation: `cardIn .4s ${idx * 0.05}s ease both` }}>
               <GalleryCard
                 g={g}
                 liked={!!liked[g.id]}
-                likeCount={likes[g.id]}
-                onToggleLike={toggleLike}
+                likeCount={g.likes || 0}
+                onToggleLike={() => toggleLike(g.id)}
                 onFavourite={() => showToast("⭐ Added to favorites!", "ok")}
               />
             </div>
           ))}
 
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !loading && (
             <div style={{
               gridColumn: "1/-1", textAlign: "center", padding: 64,
               color: "#546e7a", fontFamily: "Share Tech Mono, monospace",
               fontSize: ".9rem", animation: "fuA .4s ease both",
             }}>
               <div style={{ fontSize: "2rem", marginBottom: 12 }}>🔍</div>
-              No results found. Try different filters.
+              No records match your scan.
             </div>
           )}
         </div>
 
-        {/* ── Submit CTA ── */}
         <div style={{ textAlign: "center", marginTop: 40 }}>
           <button style={T.btnHP} onClick={() => setShowModal(true)}>
             + Submit a Phishing Example
@@ -651,7 +697,6 @@ export function GalleryPage({ showToast }) {
         </div>
       </div>
 
-      {/* ── Modal ── */}
       {showModal && (
         <SubmitModal onClose={() => setShowModal(false)} showToast={showToast} />
       )}

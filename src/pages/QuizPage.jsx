@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { T } from "../styles";
 import { XPBar } from "../components";
 import { QUESTIONS } from "../constants";
+import { saveQuizResult } from "../firebase";
+import { useUser, useAuth } from "../context";
 
 const TOTAL_QUESTIONS = Math.min(12, QUESTIONS.length);
 
@@ -262,9 +264,9 @@ function CyberBackground() {
       {/* Ambient orbs */}
       {[
         { w: 800, h: 800, bg: "rgba(0,245,255,0.09)", top: -250, left: -250, delay: "0s" },
-        { w: 600, h: 600, bg: "rgba(213,0,249,0.1)",  top: "40%", right: -220, delay: "-3s" },
+        { w: 600, h: 600, bg: "rgba(213,0,249,0.1)", top: "40%", right: -220, delay: "-3s" },
         { w: 500, h: 500, bg: "rgba(0,255,157,0.06)", bottom: "5%", left: "15%", delay: "-6s" },
-        { w: 380, h: 380, bg: "rgba(255,23,68,0.07)", top: "55%", left: "8%",   delay: "-2s" },
+        { w: 380, h: 380, bg: "rgba(255,23,68,0.07)", top: "55%", left: "8%", delay: "-2s" },
       ].map((o, i) => (
         <div key={i} style={{
           position: "fixed", borderRadius: "50%", filter: "blur(120px)",
@@ -300,11 +302,11 @@ function CyberBackground() {
 
 // ─── QUIZ PAGE ────────────────────────────────────────────────────────────────
 export function QuizPage({ xp, level, xpPct, xpToNext, addXP, setPage, showToast }) {
-  const [qIdx,     setQIdx]     = useState(0);
+  const [qIdx, setQIdx] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [timer,    setTimer]    = useState(30);
-  const [history,  setHistory]  = useState([]);
+  const [timer, setTimer] = useState(30);
+  const [history, setHistory] = useState([]);
   const timerRef = useRef(null);
 
   const q = QUESTIONS[qIdx % QUESTIONS.length];
@@ -326,19 +328,34 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, setPage, showToast
     return () => clearInterval(timerRef.current);
   }, [qIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const { awardXP } = useUser();
+  const { user } = useAuth();
+
   // ── Answer ─────────────────────────────────────────────────────────────────
-  const answer = (idx) => {
+  const answer = async (idx) => {
     if (answered) return;
     clearInterval(timerRef.current);
     setAnswered(true);
     setSelected(idx);
 
     const correct = idx === q.correct;
-    const xpGain  = correct
+    const xpGain = correct
       ? (q.diff === "easy" ? 50 : q.diff === "medium" ? 100 : 150)
       : 10;
 
-    addXP(xpGain);
+    awardXP(xpGain);
+
+    // Persist result
+    if (user) {
+      await saveQuizResult(user.uid, {
+        questionId: q.id || qIdx,
+        correct,
+        xpEarned: xpGain,
+        topic: q.topic,
+        difficulty: q.diff
+      });
+    }
+
     setHistory((h) => [...h, { idx: qIdx, correct }]);
     showToast(
       correct ? `🎯 Correct! +${xpGain} XP earned!` : "❌ Not quite. Read the explanation below.",
@@ -357,10 +374,10 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, setPage, showToast
   };
 
   // ── Timer ring visuals ─────────────────────────────────────────────────────
-  const CIRC      = 125.6;
-  const offset    = CIRC - (timer / 30) * CIRC;
+  const CIRC = 125.6;
+  const offset = CIRC - (timer / 30) * CIRC;
   const timerColor = timer > 15 ? "#00f5ff" : timer > 7 ? "#ff6d00" : "#ff1744";
-  const diffColor  = q.diff === "easy" ? "#00ff9d" : q.diff === "medium" ? "#ff6d00" : "#ff1744";
+  const diffColor = q.diff === "easy" ? "#00ff9d" : q.diff === "medium" ? "#ff6d00" : "#ff1744";
 
   return (
     <div style={{
@@ -470,11 +487,11 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, setPage, showToast
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13 }}>
             {q.opts.map((opt, i) => {
               let border = "1px solid rgba(0,245,255,.08)";
-              let bg     = "rgba(0,8,18,0.8)";
-              let color  = "#e0f7fa";
+              let bg = "rgba(0,8,18,0.8)";
+              let color = "#e0f7fa";
 
               if (answered) {
-                if (i === q.correct)     { border = "1px solid #00ff9d"; bg = "rgba(0,255,157,.08)"; color = "#00ff9d"; }
+                if (i === q.correct) { border = "1px solid #00ff9d"; bg = "rgba(0,255,157,.08)"; color = "#00ff9d"; }
                 else if (i === selected) { border = "1px solid #ff1744"; bg = "rgba(255,23,68,.08)"; color = "#ff1744"; }
               }
 
@@ -519,8 +536,8 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, setPage, showToast
           {/* Progress dots */}
           <div style={{ display: "flex", gap: 5, marginTop: 22 }}>
             {Array.from({ length: TOTAL_QUESTIONS }).map((_, i) => {
-              const h   = history[i];
-              const bg  = h ? (h.correct ? "#00f5ff" : "#ff1744") : i === qIdx ? "#00ff9d" : "rgba(255,255,255,.1)";
+              const h = history[i];
+              const bg = h ? (h.correct ? "#00f5ff" : "#ff1744") : i === qIdx ? "#00ff9d" : "rgba(255,255,255,.1)";
               const shd = h ? (h.correct ? "0 0 6px #00f5ff" : "0 0 6px #ff1744") : i === qIdx ? "0 0 8px #00ff9d" : "none";
               return (
                 <div key={i} style={{

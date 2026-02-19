@@ -25,11 +25,15 @@ export async function createOrUpdateUser(firebaseUser) {
     const snap = await getDoc(ref);
 
     if (!snap.exists()) {
+        // Enforce anonymity by default - don't leak Google Name/Image
+        const anonymousName = `Agent_${firebaseUser.uid.slice(0, 5).toUpperCase()}`;
+        const anonymousPhoto = `https://api.dicebear.com/7.x/identicon/svg?seed=${firebaseUser.uid}`;
+
         await setDoc(ref, {
             uid: firebaseUser.uid,
-            displayName: firebaseUser.displayName ?? "Agent",
+            displayName: anonymousName,
             email: firebaseUser.email,
-            photoURL: firebaseUser.photoURL ?? null,
+            photoURL: anonymousPhoto,
             xp: 0,
             level: 1,
             streak: 0,
@@ -196,4 +200,30 @@ export async function getGalleryEntries(topN = 50) {
 /** Increment likes on a gallery entry. */
 export async function likeGalleryEntry(entryId) {
     await updateDoc(doc(db, "gallery", entryId), { likes: increment(1) });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FEEDBACK & LOGGING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Submit user feedback / bug report. */
+export async function submitFeedback({ uid, email, type, message }) {
+    await addDoc(collection(db, "feedback"), {
+        uid: uid || "guest",
+        email: email || "unknown",
+        type: type || "general",
+        message,
+        status: "new",
+        submittedAt: serverTimestamp(),
+    });
+}
+
+/** Log a platform-level action for analytics. */
+export async function logPlatformAction(uid, action, metadata = {}) {
+    await addDoc(collection(db, "activity_logs"), {
+        uid: uid || "guest",
+        action,
+        metadata,
+        timestamp: serverTimestamp(),
+    });
 }

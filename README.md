@@ -1,8 +1,8 @@
 # 🛡️ PhishGuard — Cyber Threat Training Platform
 
-> Beast-mode hackathon build · React + Vite · Zero external UI libs
+> Beast-mode hackathon build · React + Vite · Firebase Integrated · AI-Academy
 
-PhishGuard is a fully gamified phishing-awareness training app built entirely in React with an aggressive cyber/military terminal aesthetic.
+PhishGuard is a high-fidelity, gamified phishing-awareness training platform built with a cutting-edge cyber-terminal aesthetic. It leverages Google Gemini AI for real-time analysis, adaptive knowledge checks, and an immersive 'Neural Academy' training environment.
 
 ---
 
@@ -17,6 +17,16 @@ npm run preview    # preview production build
 
 ---
 
+## 🔥 New Features
+
+- **🤖 Gemini AI Integration**: Advanced neural link powered by Google Gemini (1.5 Pro/Flash), providing dynamic cybersecurity insights and a responsive AI interlocutor (Finn-AI).
+- **📡 Firebase Cloud Infrastructure**: Synchronized defense grid using Firestore for real-time leaderboards, quizzes, and community-driven threat intelligence.
+- **🛡️ Neural Academy**: A consolidated learning hub merging interactive tutorials with AI-driven technical analysis and high-fidelity simulations.
+- **👤 Agent Dossier**: Encrypted profile management with persistent XP tracking, streak monitoring, and custom avatar synchronization via Firebase Storage.
+- **🛂 Admin Command Center**: Restricted access portal (`phishguard2026`) for managing global platform parameters and monitoring recruit progress.
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -24,66 +34,36 @@ phishguard/
 ├── index.html                  # Vite HTML entry
 ├── vite.config.js
 ├── package.json
+├── firebase.json               # Firebase Hosting config
 └── src/
     ├── main.jsx                # React root mount
     ├── App.jsx                 # Root component — routing + global state
     │
-    ├── constants/              # All static data
-    │   ├── questions.js        # 8 adaptive quiz questions (easy/medium/hard)
-    │   ├── leaderboard.js      # LB_DATA — 9 ranked defenders
-    │   ├── gallery.js          # GALLERY_DATA — 6 phishing examples
-    │   ├── badges.js           # BADGES — 8 achievement badges
-    │   ├── redFlags.js         # RED_FLAGS — 6 universal indicators
-    │   ├── simulator.js        # SIM_STAGES — 2 real-vs-fake email stages
-    │   ├── tips.js             # TIPS + XP_PER_LEVEL thresholds
-    │   └── index.js            # Barrel re-exports
+    ├── firebase/               # Firebase configuration
+    │   ├── config.js           # SDK Initialisation
+    │   ├── auth.js             # Google Auth providers
+    │   └── seed.js             # Automatic DB seeding system
     │
-    ├── styles/
-    │   ├── globalStyles.js     # GLOBAL_CSS string (fonts, keyframes, bg)
-    │   ├── tokens.js           # Shared inline-style objects (T.card, T.btnP …)
-    │   └── index.js            # Barrel re-exports
-    │
-    ├── hooks/
-    │   ├── useXPSystem.js      # XP, level, level-up detection
-    │   ├── useToast.js         # Bottom-right toast notifications
-    │   ├── useTurtleTip.js     # Sheldon's cycling tip system
-    │   └── index.js
+    ├── constants/              # All static/fallback data
+    │   ├── questions.js        # Baseline quiz data
+    │   ├── leaderboard.js      # LB_DATA fallback
+    │   └── ...
     │
     ├── components/             # Shared UI components
-    │   ├── MatrixCanvas.jsx    # Full-screen matrix rain canvas
-    │   ├── Navbar.jsx          # Fixed top nav with XP counter
-    │   ├── Toast.jsx           # Slide-in notification
-    │   ├── LevelUpOverlay.jsx  # Full-screen level-up celebration + confetti
-    │   ├── Turtle.jsx          # Sheldon the cyber mascot (floating + speech bubble)
-    │   ├── XPBar.jsx           # Reusable XP progress bar
+    │   ├── canvas/             # Cyber background layers (Particle, Matrix, Hex)
+    │   ├── Navbar.jsx          # Fixed top nav with live XP
+    │   ├── Finn.jsx            # Updated Mascot (Floating + Neural tips)
     │   └── index.js
     │
-    └── pages/                  # One file per page/feature
-        ├── HomePage.jsx        # Hero, email mock, red flags, footer
-        ├── QuizPage.jsx        # Adaptive quiz with timer ring + explanation
-        ├── SimulatorPage.jsx   # Split real-vs-fake email trainer
-        ├── LeaderboardPage.jsx # Global rankings table
-        ├── GalleryPage.jsx     # Filterable phishing examples + submit modal
-        ├── ProgressPage.jsx    # Profile, badges, learning map, XP history
-        └── index.js
+    └── pages/                  # Platform Nodes
+        ├── HomePage.jsx        # Command Dashboard & Live Metrics
+        ├── AILearningPage.jsx  # Neural Academy (Gemini AI Link)
+        ├── ProfilePage.jsx     # Agent Dossier & Bio Config
+        ├── SimulatorPage.jsx   # Real-vs-Fake Threat Trainer
+        ├── QuizPage.jsx        # Adaptive Knowledge Check
+        ├── AdminPage.jsx       # Command Center (Restricted Access)
+        └── ...
 ```
-
----
-
-## 🎮 Features
-
-| Feature | File |
-|---|---|
-| Adaptive Quiz (8 questions, 3 difficulties) | `pages/QuizPage.jsx` |
-| Real-vs-Fake Email Simulator | `pages/SimulatorPage.jsx` |
-| Global Leaderboard | `pages/LeaderboardPage.jsx` |
-| Community Phishing Gallery | `pages/GalleryPage.jsx` |
-| Player Progress & Badge System | `pages/ProgressPage.jsx` |
-| XP & Level-up System | `hooks/useXPSystem.js` |
-| Matrix Rain Background | `components/MatrixCanvas.jsx` |
-| Sheldon Turtle Mascot | `components/Turtle.jsx` + `hooks/useTurtleTip.js` |
-| Toast Notifications | `components/Toast.jsx` + `hooks/useToast.js` |
-| Beast Cyber Theme | `styles/globalStyles.js` + `styles/tokens.js` |
 
 ---
 
@@ -91,14 +71,28 @@ phishguard/
 
 - **Fonts:** Orbitron (headings) · Rajdhani (body) · Share Tech Mono (labels/code)
 - **Colors:** Cyan `#00f5ff` · Green `#00ff9d` · Red `#ff1744` · Purple `#d500f9` · Gold `#ffd600`
-- **Effects:** Matrix rain · dual grid background · scanlines · ambient orbs · glitch animation
-- **Style approach:** All styles via inline JS objects in `styles/tokens.js` — no CSS modules, no Tailwind
+- **Effects:** Neural particle field · Hex-grid distortion · Scanlines · Ambient orbs
+- **Philosophy:** No generic external UI libraries (Tailwind, MUI). Pure CSS-in-JS and Vanilla JS logic for maximum tactical performance and artistic cohesion.
 
 ---
 
-## 🏆 Hackathon Notes
+## 🔑 Environment Configuration
 
-- Zero external UI component libraries (pure React)
-- Single shared style token object (`T`) used across all components
-- All data is static/local — no backend required
-- Fully functional quiz scoring, flag detection, and XP system
+Create a `.env` file in the root directory:
+```env
+VITE_GEMINI_API_KEY=your_google_gemini_api_key_here
+```
+The platform uses a priority-based fallback sequence: `Gemini 3.1 Pro (Preview)` → `Gemini 3 Pro` → `Gemini 1.5 Pro` → `Gemini 1.5 Flash`.
+
+---
+
+## 🛂 Admin Access
+
+Access the **Command Center** via the hidden route `/admin`.
+- **Default Key:** `phishguard2026`
+
+---
+
+## 🛡️ License
+
+Built for the **Cyber Beast 2026 Hackathon**. Educational Use Only.

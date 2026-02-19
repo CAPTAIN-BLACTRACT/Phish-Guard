@@ -9,9 +9,9 @@ import { TIPS } from "../constants";
  *   currentTip  – the tip string to display (null when hidden)
  *   nextTip()   – manually advance to the next tip
  */
-export function useTurtleTip() {
-  const [tipIdx,   setTipIdx]   = useState(0);
-  const [showTip,  setShowTip]  = useState(false);
+export function useFinnTip() {
+  const [tipIdx, setTipIdx] = useState(0);
+  const [showTip, setShowTip] = useState(false);
 
   // Show first tip after 2 s
   useEffect(() => {

@@ -1,13 +1,9 @@
-/**
- * LoginPage
- * Full-screen animated login/register modal that integrates with Firebase Auth.
- * Supports: Google OAuth, email+password sign-in, and new account registration.
- */
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { T } from "../styles";
 
 export default function LoginPage({ onClose }) {
-    const { signInWithGoogle, signInEmail, registerEmail, resetPassword } = useAuth();
+    const { signInWithGoogle, signInEmail, registerEmail, resetPassword, signInGuest } = useAuth();
 
     const [mode, setMode] = useState("login");   // "login" | "register" | "reset"
     const [email, setEmail] = useState("");
@@ -27,6 +23,7 @@ export default function LoginPage({ onClose }) {
     const handleGoogle = () => handle(signInWithGoogle);
     const handleSignIn = (e) => { e.preventDefault(); handle(() => signInEmail(email, password)); };
     const handleRegister = (e) => { e.preventDefault(); handle(() => registerEmail(email, password, name)); };
+    const handleGuest = () => handle(signInGuest);
     const handleReset = async (e) => {
         e.preventDefault(); setError(""); setBusy(true);
         try { await resetPassword(email); setMsg("Reset link sent – check your inbox!"); }
@@ -34,137 +31,84 @@ export default function LoginPage({ onClose }) {
         finally { setBusy(false); }
     };
 
-    /* ── Styles ── */
-    const overlay = {
-        position: "fixed", inset: 0, zIndex: 9000,
-        background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "1rem",
-    };
-    const card = {
-        background: "linear-gradient(145deg,#0a0e1a,#0d1525)",
-        border: "1px solid rgba(0,245,255,0.2)",
-        borderRadius: 20, padding: "2.5rem",
-        width: "100%", maxWidth: 420,
-        boxShadow: "0 0 60px rgba(0,245,255,0.15), 0 0 120px rgba(213,0,249,0.1)",
-        position: "relative",
-    };
-    const inp = {
-        width: "100%", padding: "0.75rem 1rem",
-        background: "rgba(255,255,255,0.05)",
-        border: "1px solid rgba(0,245,255,0.25)",
-        borderRadius: 10, color: "#fff",
-        fontFamily: "inherit", fontSize: "0.95rem",
-        outline: "none", boxSizing: "border-box",
-        marginBottom: "0.75rem",
-    };
-    const btn = (grad) => ({
-        width: "100%", padding: "0.8rem",
-        background: grad, border: "none",
-        borderRadius: 10, color: "#fff",
-        fontFamily: "inherit", fontWeight: 700,
-        fontSize: "0.95rem", cursor: busy ? "not-allowed" : "pointer",
-        opacity: busy ? 0.6 : 1,
-        marginBottom: "0.5rem",
-        transition: "opacity .2s",
-    });
-
     return (
-        <div style={overlay} onClick={(e) => e.target === e.currentTarget && onClose?.()}>
-            <div style={card}>
-                {/* Close */}
-                <button onClick={onClose} style={{
-                    position: "absolute", top: 16, right: 16, background: "none", border: "none",
-                    color: "rgba(255,255,255,0.5)", fontSize: "1.4rem", cursor: "pointer",
-                }}>✕</button>
+        <div
+            onClick={(e) => e.target === e.currentTarget && onClose?.()}
+            style={{
+                position: "fixed", inset: 0, zIndex: 9000,
+                background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "1rem",
+            }}
+        >
+            <style>{`
+              @keyframes loginPop { from{opacity:0;transform:scale(.95) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+              @media (max-width: 500px) {
+                .login-card { padding: 24px !important; }
+              }
+            `}</style>
+            <div
+                className="login-card"
+                style={{
+                    background: "linear-gradient(145deg,#0a0e1a,#0d1525)",
+                    border: "1px solid rgba(0,245,255,0.2)",
+                    borderRadius: 20, padding: 40, width: "100%", maxWidth: 420,
+                    boxShadow: "0 0 60px rgba(0,245,255,0.15)",
+                    position: "relative", animation: "loginPop 0.4s ease both"
+                }}
+            >
+                <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "1.4rem", cursor: "pointer" }}>✕</button>
 
-                {/* Header */}
-                <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-                    <div style={{ fontSize: "2.5rem", marginBottom: 8 }}>🛡️</div>
-                    <h2 style={{
-                        margin: 0, fontFamily: "Share Tech Mono,monospace",
-                        background: "linear-gradient(135deg,#00f5ff,#d500f9)",
-                        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                        fontSize: "1.6rem",
-                    }}>PhishGuard</h2>
-                    <p style={{ color: "rgba(255,255,255,0.45)", marginTop: 4, fontSize: "0.85rem" }}>
-                        {mode === "login" && "Sign in to your account"}
-                        {mode === "register" && "Create a new account"}
-                        {mode === "reset" && "Reset your password"}
-                    </p>
+                <div style={{ textAlign: "center", marginBottom: 24 }}>
+                    <div style={{ fontSize: "2.2rem", marginBottom: 8 }}>🛡️</div>
+                    <h2 style={{ margin: 0, fontFamily: "Orbitron, sans-serif", color: "#00f5ff", fontSize: "1.5rem" }}>Authentication</h2>
+                    <p style={{ color: "#546e7a", marginTop: 4, fontSize: "0.85rem", fontFamily: "Share Tech Mono" }}>PHISH-GUARD TERMINAL v1.0</p>
                 </div>
 
-                {/* Error / Success */}
-                {error && <p style={{
-                    color: "#ff4757", background: "rgba(255,71,87,0.1)",
-                    padding: "0.6rem 1rem", borderRadius: 8, marginBottom: "1rem", fontSize: "0.85rem"
-                }}>{error}</p>}
-                {msg && <p style={{
-                    color: "#00f5ff", background: "rgba(0,245,255,0.1)",
-                    padding: "0.6rem 1rem", borderRadius: 8, marginBottom: "1rem", fontSize: "0.85rem"
-                }}>{msg}</p>}
+                {error && (
+                    <div style={{ color: "#ff4757", background: "rgba(255,71,87,0.1)", padding: 12, borderRadius: 8, marginBottom: 16, fontSize: "0.8rem", border: "1px solid rgba(255,71,87,0.2)" }}>
+                        <strong>AUTH_ERROR:</strong> {error}
+                        {error.includes("auth/operation-not-allowed") && <div style={{ marginTop: 8, color: "#00f5ff", fontSize: "0.7rem" }}>Tip: Enable Google Auth in Firebase Console!</div>}
+                    </div>
+                )}
+                {msg && <p style={{ color: "#00f5ff", background: "rgba(0,245,255,0.1)", padding: 10, borderRadius: 8, marginBottom: 16, fontSize: "0.85rem" }}>{msg}</p>}
 
-                {/* ── Login form ── */}
                 {mode === "login" && (
                     <>
-                        <button onClick={handleGoogle} style={btn("linear-gradient(135deg,#4285f4,#34a853)")}>
-                            🔗 Continue with Google
+                        <button onClick={handleGoogle} disabled={busy} style={{ ...T.btnP, width: "100%", marginBottom: 12, background: "#fff", color: "#000", fontWeight: 700 }}>
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/layout/google.svg" width="16" style={{ marginRight: 8 }} alt="google" />
+                            Sign in with Google
                         </button>
-                        <div style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", margin: "0.75rem 0", fontSize: "0.8rem" }}>
-                            — or —
-                        </div>
+                        <button onClick={handleGuest} disabled={busy} style={{ ...T.btnG, width: "100%", marginBottom: 16 }}>
+                            ⚡ Continue as Guest
+                        </button>
+                        <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", margin: "12px 0", fontSize: "0.75rem" }}>— OR —</div>
                         <form onSubmit={handleSignIn}>
-                            <input style={inp} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-                            <input style={inp} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
-                            <button type="submit" style={btn("linear-gradient(135deg,#00f5ff,#d500f9)")} disabled={busy}>
-                                {busy ? "Signing in…" : "Sign In"}
-                            </button>
+                            <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 12 }} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+                            <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 16 }} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+                            <button type="submit" disabled={busy} style={{ ...T.btnP, width: "100%" }}>{busy ? "Authenticating..." : "Sign In"}</button>
                         </form>
-                        <div style={{ textAlign: "center", marginTop: "0.75rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.4)" }}>
-                            <span onClick={() => setMode("reset")} style={{ cursor: "pointer", color: "#00f5ff" }}>Forgot password?</span>
-                            {" · "}
-                            <span onClick={() => setMode("register")} style={{ cursor: "pointer", color: "#d500f9" }}>Create account</span>
+                        <div style={{ marginTop: 20, padding: 12, borderRadius: 8, background: "rgba(0,245,255,0.05)", border: "1px dashed rgba(0,245,255,0.3)" }}>
+                            <div style={{ fontSize: "0.7rem", color: "#00f5ff", fontFamily: "Share Tech Mono", marginBottom: 4 }}>// DEMO CONSOLE</div>
+                            <div style={{ fontSize: "0.75rem", color: "#90a4ae" }}>Email: <span style={{ color: "#fff" }}>demo@phishguard.ai</span></div>
+                            <div style={{ fontSize: "0.75rem", color: "#90a4ae" }}>Pass: <span style={{ color: "#fff" }}>demo123</span></div>
+                        </div>
+                        <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.85rem", color: "#546e7a" }}>
+                            New recruit? <span onClick={() => setMode("register")} style={{ cursor: "pointer", color: "#00f5ff" }}>Create Account</span>
                         </div>
                     </>
                 )}
 
-                {/* ── Register form ── */}
                 {mode === "register" && (
-                    <>
-                        <button onClick={handleGoogle} style={btn("linear-gradient(135deg,#4285f4,#34a853)")}>
-                            🔗 Sign up with Google
-                        </button>
-                        <div style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", margin: "0.75rem 0", fontSize: "0.8rem" }}>
-                            — or with email —
+                    <form onSubmit={handleRegister}>
+                        <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 12 }} type="text" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} required />
+                        <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 12 }} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+                        <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 16 }} type="password" placeholder="Password (min 6 chars)" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required />
+                        <button type="submit" disabled={busy} style={{ ...T.btnP, width: "100%" }}>{busy ? "Initializing..." : "Register Now"}</button>
+                        <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.85rem", color: "#546e7a" }}>
+                            Already guarded? <span onClick={() => setMode("login")} style={{ cursor: "pointer", color: "#00f5ff" }}>Sign In</span>
                         </div>
-                        <form onSubmit={handleRegister}>
-                            <input style={inp} type="text" placeholder="Display Name" value={name} onChange={e => setName(e.target.value)} required />
-                            <input style={inp} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-                            <input style={inp} type="password" placeholder="Password (min 6 chars)" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required />
-                            <button type="submit" style={btn("linear-gradient(135deg,#00ff9d,#00b8ff)")} disabled={busy}>
-                                {busy ? "Creating…" : "Create Account"}
-                            </button>
-                        </form>
-                        <div style={{ textAlign: "center", marginTop: "0.75rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.4)" }}>
-                            Already have an account?{" "}
-                            <span onClick={() => setMode("login")} style={{ cursor: "pointer", color: "#00f5ff" }}>Sign in</span>
-                        </div>
-                    </>
-                )}
-
-                {/* ── Reset form ── */}
-                {mode === "reset" && (
-                    <>
-                        <form onSubmit={handleReset}>
-                            <input style={inp} type="email" placeholder="Your email" value={email} onChange={e => setEmail(e.target.value)} required />
-                            <button type="submit" style={btn("linear-gradient(135deg,#ff6b6b,#ffa502)")} disabled={busy}>
-                                {busy ? "Sending…" : "Send Reset Link"}
-                            </button>
-                        </form>
-                        <div style={{ textAlign: "center", marginTop: "0.75rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.4)" }}>
-                            <span onClick={() => setMode("login")} style={{ cursor: "pointer", color: "#00f5ff" }}>Back to Sign In</span>
-                        </div>
-                    </>
+                    </form>
                 )}
             </div>
         </div>

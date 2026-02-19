@@ -22,28 +22,23 @@ service firebase.storage {
 
     // ─── Avatars  /avatars/{uid}/{fileName} ───────────────────────
     match /avatars/{uid}/{fileName} {
-      // Anyone signed-in can view any avatar
-      allow read: if isSignedIn();
+      // Public read for leaderboards/profiles
+      allow read: if true;
 
-      // Only the owner can upload/replace their avatar (max 2 MB, images only)
+      // Only the agent can upload/replace their own visual ID (max 2MB)
       allow write: if isOwner(uid) && isImage() && isFileSizeOk(2);
-
       allow delete: if isOwner(uid);
     }
 
-    // ─── Gallery  /gallery/{uid}/{fileName} ───────────────────────
+    // ─── Community Gallery /gallery/{uid}/{fileName} ────────────
     match /gallery/{uid}/{fileName} {
-      // Any signed-in user can view gallery images
-      allow read: if isSignedIn();
-
-      // Owner can upload images (max 5 MB)
-      allow write: if isOwner(uid) && isImage() && isFileSizeOk(5);
-
-      // Only the owner can delete their uploads
+      allow read: if true;
+      // Verified agents can upload threat screenshots (max 5MB)
+      allow write: if isSignedIn() && isImage() && isFileSizeOk(5);
       allow delete: if isOwner(uid);
     }
 
-    // ─── Catch-all – deny everything else ─────────────────────────
+    // ─── Default Deny ─────────────────────────────────────────────
     match /{allPaths=**} {
       allow read, write: if false;
     }

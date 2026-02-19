@@ -27,6 +27,7 @@ export const GLOBAL_CSS = `
     color: var(--txt);
     overflow-x: hidden;
     font-size: 16px;
+    cursor: crosshair;
   }
 
   #root { min-height: 100vh; }
@@ -111,5 +112,11 @@ export const GLOBAL_CSS = `
   @keyframes ticker {
     0%   { transform: translateX(100%); }
     100% { transform: translateX(-100%); }
+  }
+
+  /* Responsive Utilities */
+  @media (max-width: 768px) {
+    .hide-mobile { display: none !important; }
+    .nav-links { display: none !important; }
   }
 `;

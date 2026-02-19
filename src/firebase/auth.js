@@ -12,6 +12,7 @@ import {
     signOut,
     onAuthStateChanged,
     updateProfile,
+    signInAnonymously as firebaseSignInAnonymously,
 } from "firebase/auth";
 
 import { auth } from "./config";
@@ -42,6 +43,12 @@ export async function signInEmail(email, password) {
 
 export async function resetPassword(email) {
     await sendPasswordResetEmail(auth, email);
+}
+
+export async function signInGuest() {
+    const { user } = await firebaseSignInAnonymously(auth);
+    await createOrUpdateUser(user);
+    return user;
 }
 
 // ─── Sign Out ─────────────────────────────────────────────────────────────────

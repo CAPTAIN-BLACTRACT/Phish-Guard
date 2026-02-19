@@ -1,4 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { db } from "../firebase/config";
+import { collection, onSnapshot } from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
+import { useUser } from "../context/UserContext";
 
 const RED_FLAGS = [
   {
@@ -808,7 +812,7 @@ function LightningStreaks() {
   useEffect(() => {
     let id = 0;
     const spawn = () => {
-      const newId = id++;
+      const newId = Math.random().toString(36).substring(2, 11);
       const colors = [
         "rgba(0,245,255,",
         "rgba(0,255,157,",
@@ -1016,39 +1020,98 @@ function GlobalStyles() {
       @media (max-width:900px) {
         .hero-section {
           flex-direction: column !important;
-          padding: 100px 24px 60px !important;
-          gap: 48px !important;
+          padding: 60px 24px 40px !important;
+          gap: 32px !important;
           min-height: auto !important;
         }
         .hero-left { max-width: 100% !important; }
         .hero-right-vis { display: none !important; }
         .nav-links-row { display: none !important; }
-        .section-pad { padding: 52px 24px !important; }
-        .nav-cards-grid { grid-template-columns: repeat(2,1fr) !important; }
-        .flags-grid { grid-template-columns: repeat(2,1fr) !important; }
-        .stats-strip-grid { grid-template-columns: 1fr !important; }
-        .stats-row { flex-wrap: wrap !important; gap: 24px !important; }
-        .footer-wrap { padding: 52px 24px 28px !important; }
-        .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
-        .footer-bottom { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
-        .nav-xp-streak { display: none !important; }
+        .section-pad { padding: 40px 24px !important; }
       }
 
       @media (max-width:600px) {
-        .nav-cards-grid { grid-template-columns: 1fr !important; }
-        .flags-grid { grid-template-columns: 1fr !important; }
-        .footer-grid { grid-template-columns: 1fr !important; }
-        .hero-btns { flex-direction: column !important; }
+        .hero-btns { flex-direction: column !important; gap: 12px !important; }
       }
     `}</style>
+  );
+}
+
+// ─── FEEDBACK SECTION ────────────────────────────────────────────────────────
+function FeedbackSection({ user }) {
+  const [msg, setMsg] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | sending | ok | ng
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!msg.trim()) return;
+    setStatus("sending");
+    try {
+      const { submitFeedback } = await import("../firebase/db");
+      await submitFeedback({
+        uid: user?.uid,
+        email: user?.email,
+        message: msg
+      });
+      setStatus("ok");
+      setMsg("");
+      setTimeout(() => setStatus("idle"), 3000);
+    } catch (err) {
+      console.error(err);
+      setStatus("ng");
+      setTimeout(() => setStatus("idle"), 3000);
+    }
+  };
+
+  return (
+    <section className="intel-report" style={{ padding: "80px 40px", background: "rgba(0,245,255,0.02)", borderTop: "1px solid rgba(0,245,255,0.05)", position: "relative", zIndex: 2 }}>
+      <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center" }}>
+        <div style={T.secLbl}>// INTEL REPORT</div>
+        <h2 style={{ ...T.secTitle, fontSize: "2rem", marginBottom: 12 }}>Platform Feedback</h2>
+        <p style={{ color: "#546e7a", marginBottom: 32, fontFamily: "Share Tech Mono" }}>Help us strengthen the defense grid by reporting bugs or suggesting features.</p>
+
+        <form onSubmit={handleSend} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <textarea
+            value={msg}
+            onChange={(e) => setMsg(e.target.value)}
+            placeholder="Transmit your message..."
+            disabled={status !== "idle"}
+            style={{
+              width: "100%", background: "#000a12", border: "1px solid rgba(0,245,255,0.2)",
+              color: "#fff", padding: 16, borderRadius: 4, minHeight: 120,
+              fontFamily: "Share Tech Mono", fontSize: "0.9rem", resize: "none",
+              outline: "none", transition: "border-color .25s"
+            }}
+          />
+          <button
+            type="submit"
+            disabled={status !== "idle" || !msg.trim()}
+            style={{
+              ...T.btnHP, width: "100%", justifyContent: "center",
+              background: status === "ok" ? "#00ff9d" : (status === "ng" ? "#ff1744" : undefined),
+              borderColor: status === "ok" ? "#00ff9d" : (status === "ng" ? "#ff1744" : undefined),
+              color: (status === "ok" || status === "ng") ? "#000" : undefined
+            }}
+          >
+            {status === "idle" && "SUBMIT REPORT ➔"}
+            {status === "sending" && "TRANSMITTING..."}
+            {status === "ok" && "REPORT RECEIVED"}
+            {status === "ng" && "TRANSMISSION FAILED"}
+          </button>
+        </form>
+      </div>
+    </section>
   );
 }
 
 // ─── MAIN HOMEPAGE ───────────────────────────────────────────────────────────
 // Fixed: self-contained with internal page state + setPage prop is optional
 export function HomePage({ setPage: setPageProp }) {
+  const { user, signInWithGoogle } = useAuth();
+  const { profile } = useUser();
   const [currentPage, setCurrentPage] = useState("home");
   const [navScrolled, setNavScrolled] = useState(false);
+  const [recruitCount, setRecruitCount] = useState(12482);
 
   // Use prop if provided (for integration), otherwise use internal state
   const setPage = setPageProp || setCurrentPage;
@@ -1056,7 +1119,16 @@ export function HomePage({ setPage: setPageProp }) {
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+
+    // Dynamic recruit count from Firestore
+    const unsub = onSnapshot(collection(db, "users"), (snap) => {
+      if (!snap.empty) setRecruitCount(12482 + snap.size);
+    });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      unsub();
+    };
   }, []);
 
   // If using internal state and not on home page, show placeholder
@@ -1263,102 +1335,60 @@ export function HomePage({ setPage: setPageProp }) {
         </ul>
 
         {/* Right controls */}
-        <div
-          className="nav-right"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            flexShrink: 0,
-          }}
-        >
-          <div
-            className="nav-xp-streak"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "5px 14px",
-              background: "rgba(0,245,255,.06)",
-              border: "1px solid rgba(0,245,255,.25)",
-              borderRadius: 4,
-              fontFamily: "'Share Tech Mono',monospace",
-              fontSize: ".72rem",
-              color: "#00f5ff",
-              boxShadow: "0 0 12px rgba(0,245,255,.1),inset 0 0 12px rgba(0,245,255,.03)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            ⚡ 1250 XP
-          </div>
-          <div
-            className="nav-xp-streak"
-            style={{
-              fontFamily: "'Share Tech Mono',monospace",
-              fontSize: ".72rem",
-              color: "#ff6d00",
-              whiteSpace: "nowrap",
-            }}
-          >
-            🔥 5 day streak
-          </div>
+        <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          {user ? (
+            <>
+              <div className="nav-xp-streak" style={{
+                display: "flex", alignItems: "center", gap: 8, padding: "5px 14px",
+                background: "rgba(0,245,255,.06)", border: "1px solid rgba(0,245,255,.25)",
+                borderRadius: 4, fontFamily: "'Share Tech Mono',monospace", fontSize: ".72rem",
+                color: "#00f5ff", boxShadow: "0 0 12px rgba(0,245,255,.1)", whiteSpace: "nowrap",
+              }}>
+                ⚡ {(profile?.xp ?? 0).toLocaleString()} XP
+              </div>
+              <div className="nav-xp-streak" style={{
+                fontFamily: "'Share Tech Mono',monospace", fontSize: ".72rem", color: "#ff6d00", whiteSpace: "nowrap",
+              }}>
+                🔥 {profile?.streak ?? 0}d streak
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={() => signInWithGoogle()}
+              style={{ ...T.btnHP, padding: "7px 20px", fontSize: ".72rem" }}
+            >
+              LOGIN TO TRACK XP
+            </button>
+          )}
+
           <button
             className="btn-p-hover"
-            onClick={() => setPage("quiz")}
+            onClick={() => setPage(user ? "quiz" : "ai-learning")}
             style={{
-              padding: "7px 20px",
-              background: "transparent",
-              border: "1px solid #00f5ff",
-              borderRadius: 3,
-              color: "#00f5ff",
-              fontSize: ".78rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: "'Share Tech Mono',monospace",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              boxShadow: "0 0 20px rgba(0,245,255,.2),inset 0 0 20px rgba(0,245,255,.05)",
-              position: "relative",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              transition: "all .25s",
+              padding: "7px 20px", background: "transparent", border: "1px solid #00f5ff",
+              borderRadius: 3, color: "#00f5ff", fontSize: ".78rem", fontWeight: 700,
+              cursor: "pointer", fontFamily: "'Share Tech Mono',monospace", letterSpacing: "0.08em",
+              textTransform: "uppercase", boxShadow: "0 0 20px rgba(0,245,255,.2)",
+              position: "relative", overflow: "hidden", whiteSpace: "nowrap", transition: "all .25s",
             }}
           >
-            Start Quiz
+            {user ? "Start Quiz" : "How it Works"}
           </button>
         </div>
       </nav>
 
-      {/* Hackathon tag */}
-      <div
-        style={{
-          position: "fixed",
-          top: 64,
-          right: 0,
-          zIndex: 999,
-          background: "linear-gradient(135deg,#d500f9,#8b00e8)",
-          color: "white",
-          fontFamily: "'Share Tech Mono',monospace",
-          fontSize: ".65rem",
-          padding: "4px 16px 4px 10px",
-          letterSpacing: "0.1em",
-          clipPath: "polygon(8px 0,100% 0,100% 100%,0 100%)",
-          boxShadow: "0 0 20px rgba(213,0,249,0.4)",
-        }}
-      >
-        🏆 HACKATHON BUILD
-      </div>
+
 
       {/* ── HERO ── */}
       <section
         className="hero-section"
         style={{
-          padding: "0 80px",
-          paddingTop: 62,
+          padding: "0 40px",
+          paddingTop: 40,
           display: "flex",
           alignItems: "center",
-          gap: 60,
-          minHeight: "100vh",
+          gap: 40,
+          minHeight: "85vh",
           position: "relative",
           zIndex: 2,
         }}
@@ -1370,29 +1400,35 @@ export function HomePage({ setPage: setPageProp }) {
         >
           {/* Live badge */}
           <div
+            className="live-badge"
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              padding: "5px 14px",
+              padding: "6px 16px",
               background: "rgba(0,245,255,.05)",
               border: "1px solid rgba(0,245,255,.25)",
-              borderRadius: 2,
-              fontSize: ".7rem",
+              borderRadius: 4,
+              fontSize: ".72rem",
               color: "#00f5ff",
               fontFamily: "'Share Tech Mono',monospace",
-              marginBottom: 22,
-              letterSpacing: "0.12em",
-              boxShadow: "0 0 20px rgba(0,245,255,0.1)",
+              marginBottom: 26,
+              letterSpacing: "0.15em",
+              boxShadow: "0 0 25px rgba(0,245,255,0.15)",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              position: "relative",
+              zIndex: 5,
+              width: "max-content",
             }}
           >
             <span
               style={{
-                width: 6,
-                height: 6,
+                width: 8,
+                height: 8,
                 borderRadius: "50%",
                 background: "#00ff9d",
-                boxShadow: "0 0 12px #00ff9d",
+                boxShadow: "0 0 15px #00ff9d",
                 animation: "pulse 2s infinite",
                 flexShrink: 0,
                 display: "inline-block",
@@ -1466,10 +1502,18 @@ export function HomePage({ setPage: setPageProp }) {
               animation: "fuA .6s .3s ease both",
             }}
           >
-            <button style={T.btnHP} onClick={() => setPage("simulator")}>
+            <button style={T.btnHP} onClick={async () => {
+              const { logPlatformAction } = await import("../firebase/db");
+              logPlatformAction(user?.uid, "START_SIMULATOR_HERO");
+              setPage("simulator");
+            }}>
               ⚡ Start Simulation
             </button>
-            <button style={T.btnHS} onClick={() => setPage("quiz")}>
+            <button style={T.btnHS} onClick={async () => {
+              const { logPlatformAction } = await import("../firebase/db");
+              logPlatformAction(user?.uid, "START_QUIZ_HERO");
+              setPage("quiz");
+            }}>
               📖 Take Adaptive Quiz
             </button>
           </div>
@@ -1488,7 +1532,7 @@ export function HomePage({ setPage: setPageProp }) {
             <StatDivider />
             <StatItem num="92%" lbl="Malware via email" />
             <StatDivider />
-            <StatItem num="50K+" lbl="Users trained" />
+            <StatItem num={`${(recruitCount / 1000).toFixed(1)}K+`} lbl="Users trained" />
           </div>
         </div>
 
@@ -1667,6 +1711,71 @@ export function HomePage({ setPage: setPageProp }) {
         ))}
       </div>
 
+      {/* ── SENTINEL EXTENSION SECTION ── */}
+      <section style={{ padding: "100px 80px", position: "relative", zIndex: 2, overflow: "hidden" }}>
+        <div style={{
+          display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 60, alignItems: "center",
+          background: "linear-gradient(135deg, rgba(0,245,255,0.03), transparent)",
+          border: "1px solid rgba(0,245,255,0.1)", borderRadius: 12, padding: 60
+        }}>
+          <div>
+            <div style={T.secLbl}>// REAL-TIME PROTECTION</div>
+            <h2 style={{ ...T.secTitle, fontSize: "2.5rem", marginBottom: 20 }}>
+              PhishGuard <span style={{ color: "#00f5ff" }}>Sentinel</span>
+            </h2>
+            <p style={{ color: "#546e7a", fontSize: "1.1rem", lineHeight: 1.8, marginBottom: 30 }}>
+              Bring our defense grid to your browser. PhishGuard Sentinel scans every URL you visit, detecting typosquats, homograph attacks, and insecure credential leaks before they harm you.
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 40 }}>
+              {[
+                { i: "🛡️", t: "Live Filtering", d: "Block malicious scripts on the fly." },
+                { i: "🔍", t: "URL Analysis", d: "Deep inspect suspicious domains." },
+                { i: "⚠️", t: "Alert System", d: "Instant warnings on threat detection." },
+                { i: "📊", t: "Threat Logs", d: "Keep track of scanned sites." },
+              ].map(f => (
+                <div key={f.t} style={{ display: "flex", gap: 12 }}>
+                  <span style={{ fontSize: "1.5rem" }}>{f.i}</span>
+                  <div>
+                    <div style={{ color: "#00f5ff", fontWeight: 700, fontSize: "0.9rem" }}>{f.t}</div>
+                    <div style={{ color: "#546e7a", fontSize: "0.75rem" }}>{f.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button style={{ ...T.btnHP, fontSize: "1rem", padding: "15px 40px" }}>INSTALL SENTINEL ➔</button>
+          </div>
+
+          <div style={{ position: "relative" }}>
+            {/* Mock Extension Interface */}
+            <div style={{
+              background: "#0d1525", border: "1px solid #00f5ff", borderRadius: 8,
+              width: 300, padding: 20, margin: "0 auto",
+              boxShadow: "0 0 50px rgba(0,245,255,0.2)",
+              animation: "floatY 6s ease-in-out infinite"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 15, borderBottom: "1px solid rgba(255,255,255,0.1)", pb: 10 }}>
+                <span style={{ fontFamily: "Orbitron", color: "#00f5ff", fontSize: "0.7rem" }}>PHISHGUARD SENTINEL</span>
+                <span style={{ color: "#00ff9d", fontSize: "0.7rem" }}>ACTIVE</span>
+              </div>
+              <div style={{ background: "rgba(255,23,68,0.1)", border: "1px solid #ff1744", padding: 12, borderRadius: 4, mb: 15 }}>
+                <div style={{ color: "#ff1744", fontSize: "0.65rem", fontWeight: 800 }}>THREAT DETECTED</div>
+                <div style={{ color: "#fff", fontSize: "0.75rem", mt: 4 }}>Typosquatted Domain: paypa1.com</div>
+              </div>
+              <div style={{ display: "flex", gap: 5, mt: 10 }}>
+                <div style={{ height: 4, flex: 1, background: "#00f5ff" }}></div>
+                <div style={{ height: 4, flex: 1, background: "#00f5ff" }}></div>
+                <div style={{ height: 4, flex: 1, background: "rgba(255,255,255,0.1)" }}></div>
+              </div>
+            </div>
+
+            {/* Decorative Elements */}
+            <div style={{ position: "absolute", top: -20, right: 40, width: 60, height: 60, border: "2px solid #d500f9", borderRadius: "50%", opacity: 0.3 }}></div>
+            <div style={{ position: "absolute", bottom: -10, left: 40, width: 40, height: 40, border: "2px solid #00ff9d", transform: "rotate(45deg)", opacity: 0.2 }}></div>
+          </div>
+        </div>
+      </section>
+
+
       {/* ── RED FLAGS ── */}
       <section
         className="section-pad"
@@ -1705,6 +1814,8 @@ export function HomePage({ setPage: setPageProp }) {
           ))}
         </div>
       </section>
+
+      <FeedbackSection user={user} />
 
       {/* ── FOOTER ── */}
       <footer
@@ -1823,23 +1934,24 @@ export function HomePage({ setPage: setPageProp }) {
                 { label: "Quiz", page: "quiz" },
                 { label: "Leaderboard", page: "leaderboard" },
                 { label: "Gallery", page: "gallery" },
-              ],
-            ],
-            [
-              "Resources",
-              [
-                { label: "Checklist PDF", page: null },
-                { label: "Report Phishing", page: null },
-                { label: "FAQ", page: null },
-                { label: "CISA Guidance", page: null },
+                { label: "Neural Academy", page: "ai-learning" },
               ],
             ],
             [
               "Contact",
               [
                 { label: "hello@phishguard.io", page: null },
-                { label: "About Us", page: null },
-                { label: "Privacy Policy", page: null },
+                { label: "About Us", page: "about" },
+                { label: "Privacy Policy", page: "privacy" },
+              ],
+            ],
+            [
+              "Resources",
+              [
+                { label: "Checklist PDF", page: "checklist" },
+                { label: "Report Phishing", page: "gallery" },
+                { label: "FAQ", page: "faq" },
+                { label: "CISA Guidance", page: "about" },
               ],
             ],
           ].map(([title, items]) => (

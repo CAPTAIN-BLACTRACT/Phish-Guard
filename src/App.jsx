@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { seedDatabase } from "./firebase/seed";
 
 import { GLOBAL_CSS } from "./styles/globalStyles";
 import { useXPSystem } from "./hooks/useXPSystem";
 import { useToast } from "./hooks/useToast";
-import { useTurtleTip } from "./hooks/useTurtleTip";
+import { useFinnTip } from "./hooks/useFinnTip";
 import {
-  MatrixCanvas, Navbar, Toast,
-  LevelUpOverlay, Turtle
+  Navbar, Toast,
+  LevelUpOverlay, Finn, CyberBackground
 } from "./components";
 import {
   HomePage, QuizPage, SimulatorPage,
   LeaderboardPage, GalleryPage,
-  ProgressPage
+  ProgressPage, AdminPage, InformationPage,
+  ProfilePage, AILearningPage
 } from "./pages";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -72,18 +74,25 @@ function PWAInstallBanner() {
 // ─── INNER APP (has access to contexts) ──────────────────────────────────────
 function AppInner() {
   const [page, setPage] = useState("home");
+  // Expose setPage globally for Finn and other components
+  useEffect(() => {
+    window.pgSetPage = setPage;
+  }, [setPage]);
   const [showLogin, setShowLogin] = useState(false);
-
   const { user } = useAuth();
   const { profile } = useUser();
+
+  useEffect(() => {
+    seedDatabase();
+  }, []);
   const { xp, level, addXP, xpPct, xpToNext,
     levelUpData, clearLevelUp } = useXPSystem(
-      profile?.xp ?? 1250, profile?.level ?? 1
+      profile?.xp ?? (user ? 1250 : 0), profile?.level ?? (user ? 1 : 1)
     );
   const { toast, showToast } = useToast();
-  const { currentTip, nextTip } = useTurtleTip();
+  const { currentTip, nextTip } = useFinnTip();
 
-  const STREAK = profile?.streak ?? 5;
+  const STREAK = profile?.streak ?? (user ? 5 : 0);
 
   const xpProps = { xp, level, xpPct, xpToNext, addXP };
   const toastProp = { showToast };
@@ -110,36 +119,9 @@ function AppInner() {
         nav { padding: 0 1rem !important; }
       `}</style>
 
-      {/* ── Background layers ── */}
-      <canvas id="matrix-canvas" />
-      <MatrixCanvas />
-      <div className="pg-bg" />
-      <div className="scanlines" />
+      <CyberBackground />
 
-      {/* Ambient orbs */}
-      {ORBS.map((o, i) => (
-        <div key={i} className="orb" style={{
-          width: o.w, height: o.h, background: o.bg,
-          ...(o.top !== undefined ? { top: o.top } : {}),
-          ...(o.bottom !== undefined ? { bottom: o.bottom } : {}),
-          ...(o.left !== undefined ? { left: o.left } : {}),
-          ...(o.right !== undefined ? { right: o.right } : {}),
-          animationDelay: o.delay,
-        }} />
-      ))}
 
-      {/* ── Hackathon badge ── */}
-      <div style={{
-        position: "fixed", top: 64, right: 0, zIndex: 999,
-        background: "linear-gradient(135deg,#d500f9,#8b00e8)",
-        color: "white", fontFamily: "Share Tech Mono, monospace",
-        fontSize: ".65rem", padding: "4px 16px 4px 10px",
-        letterSpacing: "0.1em",
-        clipPath: "polygon(8px 0,100% 0,100% 100%,0 100%)",
-        boxShadow: "0 0 20px rgba(213,0,249,0.4)",
-      }}>
-        🏆 HACKATHON BUILD
-      </div>
 
       {/* ── Navigation ── */}
       <Navbar
@@ -157,11 +139,17 @@ function AppInner() {
       {page === "leaderboard" && <LeaderboardPage />}
       {page === "gallery" && <GalleryPage     {...toastProp} />}
       {page === "progress" && <ProgressPage    {...xpProps} />}
+      {page === "admin" && <AdminPage       {...toastProp} />}
+      {page === "ai-learning" && <AILearningPage />}
+      {page === "profile" && <ProfilePage     {...toastProp} />}
+      {["about", "privacy", "faq", "checklist"].includes(page) && (
+        <InformationPage type={page} onBack={() => setPage("home")} />
+      )}
 
       {/* ── Global overlays ── */}
       <Toast msg={toast.msg} type={toast.type} visible={toast.visible} />
       <LevelUpOverlay data={levelUpData} onClose={clearLevelUp} />
-      <Turtle tip={currentTip} onClick={nextTip} />
+      <Finn tip={currentTip} onClick={nextTip} />
 
       {/* ── Login Modal ── */}
       {showLogin && <LoginPage onClose={() => setShowLogin(false)} />}

@@ -2,24 +2,26 @@ import { useState, useEffect, useRef } from "react";
 import { T } from "../styles";
 import { BADGES } from "../constants";
 import { XPBar } from "../components";
+import { useAuth } from "../context/AuthContext";
+import { useUser } from "../context/UserContext";
 
 const MODULES = [
-  { name: "Email Phishing Basics",       sub: "5 levels completed",       status: "done"   },
-  { name: "Red Flag Identification",     sub: "6 levels completed",       status: "done"   },
-  { name: "SMS / Smishing",             sub: "Level 2 of 5 in progress", status: "active" },
-  { name: "Spear Phishing",             sub: "Unlock at Level 10",       status: "locked" },
-  { name: "Advanced Social Engineering", sub: "Unlock at Level 15",       status: "locked" },
+  { name: "Email Phishing Basics", sub: "5 levels completed", status: "done" },
+  { name: "Red Flag Identification", sub: "6 levels completed", status: "done" },
+  { name: "SMS / Smishing", sub: "Level 2 of 5 in progress", status: "active" },
+  { name: "Spear Phishing", sub: "Unlock at Level 10", status: "locked" },
+  { name: "Advanced Social Engineering", sub: "Unlock at Level 15", status: "locked" },
 ];
 
 const ACTIVITY_STATS = [
-  ["Quizzes Completed", "23",      "#00f5ff"],
-  ["Simulations Done",  "8",       "#00ff9d"],
-  ["Streak Record",     "12 days", "#ff6d00"],
-  ["Community Flags",   "15",      "#d500f9"],
+  ["Quizzes Completed", "23", "#00f5ff"],
+  ["Simulations Done", "8", "#00ff9d"],
+  ["Streak Record", "12 days", "#ff6d00"],
+  ["Community Flags", "15", "#d500f9"],
 ];
 
-function dotColor(s)  { return s === "done" ? "#00ff9d" : s === "active" ? "#00f5ff" : "#546e7a"; }
-function badgeText(s) { return s === "done" ? "✓ DONE"  : s === "active" ? "→ ACTIVE" : "🔒 LOCKED"; }
+function dotColor(s) { return s === "done" ? "#00ff9d" : s === "active" ? "#00f5ff" : "#546e7a"; }
+function badgeText(s) { return s === "done" ? "✓ DONE" : s === "active" ? "→ ACTIVE" : "🔒 LOCKED"; }
 
 // ─── CANVAS: MATRIX RAIN ─────────────────────────────────────────────────────
 function MatrixCanvas() {
@@ -277,10 +279,10 @@ function CyberBackground() {
 
       {/* Ambient orbs */}
       {[
-        { w: 800, h: 800, bg: "rgba(0,245,255,0.09)", top: -250,  left: -250,  delay: "0s"  },
-        { w: 600, h: 600, bg: "rgba(213,0,249,0.1)",  top: "40%", right: -220, delay: "-3s" },
+        { w: 800, h: 800, bg: "rgba(0,245,255,0.09)", top: -250, left: -250, delay: "0s" },
+        { w: 600, h: 600, bg: "rgba(213,0,249,0.1)", top: "40%", right: -220, delay: "-3s" },
         { w: 500, h: 500, bg: "rgba(0,255,157,0.06)", bottom: "5%", left: "15%", delay: "-6s" },
-        { w: 380, h: 380, bg: "rgba(255,23,68,0.07)", top: "55%", left: "8%",  delay: "-2s" },
+        { w: 380, h: 380, bg: "rgba(255,23,68,0.07)", top: "55%", left: "8%", delay: "-2s" },
       ].map((o, i) => (
         <div key={i} style={{
           position: "fixed", borderRadius: "50%", filter: "blur(120px)",
@@ -328,13 +330,26 @@ function SectionLabel({ children }) {
 
 // ─── PROGRESS PAGE ────────────────────────────────────────────────────────────
 export function ProgressPage({ xp, level, xpPct, xpToNext }) {
+  const { user } = useAuth();
+  const { profile } = useUser();
+
+  const ACTIVITY_STATS = [
+    ["Quizzes Completed", profile?.quizzesCompleted || "0", "#00f5ff"],
+    ["Simulations Done", profile?.simulationsDone || "0", "#00ff9d"],
+    ["Streak Record", `${profile?.streak || 0} days`, "#ff6d00"],
+    ["Community Flags", profile?.communityFlags || "0", "#d500f9"],
+  ];
+
+  const agentName = profile?.displayName || user?.displayName || "Guest Agent";
+  const agentInitials = agentName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+
   return (
     <div style={{
       ...T.page,
       background: "#000509",
-      minHeight:  "100vh",
-      position:   "relative",
-      overflowX:  "hidden",
+      minHeight: "100vh",
+      position: "relative",
+      overflowX: "hidden",
     }}>
       {/* ── Keyframes ── */}
       <style>{`
@@ -374,7 +389,7 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
             animation: "avatarGlow 4s ease-in-out infinite",
             flexShrink: 0,
           }}>
-            CK
+            {agentInitials || "CK"}
           </div>
 
           <div>
@@ -382,10 +397,10 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
               fontFamily: "Orbitron, sans-serif", fontSize: "1.5rem", fontWeight: 800,
               marginBottom: 6, letterSpacing: "-0.01em",
             }}>
-              CyberKnight_99
+              {agentName}
             </h2>
             <p style={{ color: "#546e7a", fontFamily: "Share Tech Mono, monospace", fontSize: ".82rem" }}>
-              Level {level} · Awareness Recruit · Joined 60 days ago
+              Level {level} · {profile?.specialization || "Awareness Recruit"} · Joined {profile?.createdAt ? "recently" : "60 days ago"}
             </p>
             {/* Live status dot */}
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
@@ -426,10 +441,10 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
         {/* ── Stat cards ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>
           {[
-            ["⚡", xp.toLocaleString(), "Total XP",      "#00f5ff"],
-            ["🔥", "5",                 "Day Streak",    "#ff6d00"],
-            ["🎯", "87%",               "Accuracy",      "#00ff9d"],
-            ["📧", "34",               "Emails Flagged", "#d500f9"],
+            ["⚡", xp.toLocaleString(), "Total XP", "#00f5ff"],
+            ["🔥", profile?.streak || 0, "Day Streak", "#ff6d00"],
+            ["🎯", profile?.accuracy || "0%", "Accuracy", "#00ff9d"],
+            ["📧", "34", "Emails Flagged", "#d500f9"],
           ].map(([icon, val, lbl, color], idx) => (
             <div
               key={lbl}
@@ -480,23 +495,23 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
                     title={b.name + (b.prog ? " · " + b.prog : "")}
                     style={{
                       textAlign: "center",
-                      padding:   "14px 8px",
+                      padding: "14px 8px",
                       borderRadius: 6,
-                      cursor:    b.earned ? "pointer" : "default",
+                      cursor: b.earned ? "pointer" : "default",
                       transition: "all .2s",
                       animation: `statIn .4s ${idx * 0.04}s ease both`,
                       ...(b.earned
                         ? {
-                            background: "linear-gradient(135deg,rgba(0,245,255,.06),rgba(0,12,26,0.95))",
-                            border:     "1px solid rgba(0,245,255,.25)",
-                            boxShadow:  "0 0 20px rgba(0,245,255,.06)",
-                          }
+                          background: "linear-gradient(135deg,rgba(0,245,255,.06),rgba(0,12,26,0.95))",
+                          border: "1px solid rgba(0,245,255,.25)",
+                          boxShadow: "0 0 20px rgba(0,245,255,.06)",
+                        }
                         : {
-                            background: "rgba(0,5,14,0.8)",
-                            border:     "1px solid rgba(255,255,255,.06)",
-                            opacity:    0.5,
-                            filter:     "grayscale(0.8)",
-                          }),
+                          background: "rgba(0,5,14,0.8)",
+                          border: "1px solid rgba(255,255,255,.06)",
+                          opacity: 0.5,
+                          filter: "grayscale(0.8)",
+                        }),
                     }}
                   >
                     <div style={{ fontSize: "1.6rem", marginBottom: 6 }}>{b.icon}</div>
@@ -635,7 +650,7 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
                       fontFamily: "Share Tech Mono, monospace", fontSize: ".58rem",
                       color: i === 6 ? "#00f5ff" : "#546e7a",
                     }}>
-                      {["M","T","W","T","F","S","S"][i]}
+                      {["M", "T", "W", "T", "F", "S", "S"][i]}
                     </span>
                   </div>
                 ))}
@@ -648,21 +663,21 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
               </div>
             </div>
 
-            {/* Sheldon's tip */}
+            {/* Finn's Advisor tip */}
             <div style={{ ...T.card, padding: 28 }}>
-              <SectionLabel>SHELDON'S TIP</SectionLabel>
+              <SectionLabel>FINN-AI NEURAL ADVISOR</SectionLabel>
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
                 <div style={{
                   fontSize: "2rem", flexShrink: 0,
                   filter: "drop-shadow(0 0 8px rgba(0,245,255,.3))",
                 }}>
-                  🐢
+                  📡
                 </div>
                 <p style={{
                   fontSize: ".85rem", color: "#546e7a",
                   lineHeight: 1.7, fontStyle: "italic", margin: 0,
                 }}>
-                  "You're on a 5-day streak! Keep going — just{" "}
+                  "Neural analysis complete. Your performance metrics are stabilizing. Keep the momentum — just{" "}
                   <span style={{ color: "#00ff9d" }}>2 more days</span> to unlock the{" "}
                   <span style={{ color: "#ffd600" }}>Dedication Badge</span>. Today, try the Spear Phishing simulator!"
                 </p>
@@ -674,7 +689,7 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
                 borderRadius: 4, display: "flex", justifyContent: "space-between", alignItems: "center",
               }}>
                 <span style={{ fontFamily: "Share Tech Mono, monospace", fontSize: ".72rem", color: "#00f5ff" }}>
-                  → Try: Spear Phishing Simulator
+                  → Recommendation: Execute High-Fidelity Simulation
                 </span>
                 <span style={{ fontSize: ".72rem", color: "#546e7a", fontFamily: "Share Tech Mono, monospace" }}>
                   +150 XP

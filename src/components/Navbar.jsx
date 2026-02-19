@@ -9,6 +9,7 @@ const LINKS = [
   { id: "quiz", label: "Quiz", icon: "🧠" },
   { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
   { id: "gallery", label: "Gallery", icon: "🖼️" },
+  { id: "ai-learning", label: "Neural Academy", icon: "🤖" },
   { id: "progress", label: "Progress", icon: "📈" },
 ];
 
@@ -50,7 +51,6 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
         {/* Desktop nav links */}
         <ul style={{
           display: "flex", listStyle: "none", gap: 24, margin: 0,
-          "@media(max-width:768px)": { display: "none" },
         }} className="nav-links">
           {LINKS.map(({ id, label }) => (
             <li key={id}>
@@ -95,23 +95,55 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
           {/* Auth button */}
           {user ? (
             <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8 }}>
-              <img
-                src={user.photoURL ?? `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`}
-                alt="avatar"
-                style={{
-                  width: 32, height: 32, borderRadius: "50%",
-                  border: "2px solid #00f5ff", cursor: "pointer"
-                }}
-                onClick={() => signOutUser()}
-                title="Click to sign out"
-              />
+              <div
+                style={{ position: "relative", cursor: "pointer" }}
+                onMouseEnter={() => setMenuOpen(true)}
+              >
+                <img
+                  src={profile?.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`}
+                  alt="avatar"
+                  style={{
+                    width: 32, height: 32, borderRadius: "50%",
+                    border: "2px solid #00f5ff", boxShadow: "0 0 10px rgba(0,245,255,0.2)"
+                  }}
+                  onClick={() => setPage("profile")}
+                />
+
+                {/* Desktop Dropdown - simplified logic */}
+                <div className="nav-dropdown" style={{
+                  position: "absolute", top: "110%", right: 0,
+                  background: "rgba(10,14,26,0.95)", border: "1px solid rgba(0,245,255,0.2)",
+                  borderRadius: 4, padding: "8px 0", minWidth: 140,
+                  zIndex: 9999, display: "none", animation: "fuA 0.2s ease both"
+                }}>
+                  <div
+                    onClick={() => setPage("profile")}
+                    style={{ padding: "8px 16px", color: "#e0f7fa", fontSize: "0.75rem", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                  >
+                    📂 AGENT PROFILE
+                  </div>
+                  <div
+                    onClick={() => signOutUser()}
+                    style={{ padding: "8px 16px", color: "#ff4757", fontSize: "0.75rem", cursor: "pointer" }}
+                  >
+                    🚪 TERMINATE SESSION
+                  </div>
+                </div>
+              </div>
+
               <span style={{
                 fontFamily: "Share Tech Mono, monospace",
-                fontSize: ".68rem", color: "#00f5ff", maxWidth: 80,
+                fontSize: ".68rem", color: "#00f5ff", maxWidth: 90,
                 overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }} className="hide-mobile">
-                {user.displayName?.split(" ")[0] ?? "Agent"}
+                cursor: "pointer"
+              }} className="hide-mobile" onClick={() => setPage("profile")}>
+                {profile?.displayName || "Agent"}
               </span>
+
+              <style>{`
+                div:hover > .nav-dropdown { display: block !important; }
+                .nav-dropdown div:hover { background: rgba(0,245,255,0.1); color: #fff !important; }
+              `}</style>
             </div>
           ) : (
             <button style={{
