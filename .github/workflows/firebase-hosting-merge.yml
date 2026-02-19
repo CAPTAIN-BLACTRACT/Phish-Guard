@@ -15,4 +15,4 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PHISHGUARD }}'
           channelId: live
-          projectId: phish-guard-dev
+          projectId: phish-guard-edu
