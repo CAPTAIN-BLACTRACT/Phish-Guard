@@ -2,7 +2,7 @@
 
 > Beast-mode hackathon build · React + Vite · Firebase Integrated · AI-Academy
 
-PhishGuard is a high-fidelity, gamified phishing-awareness training platform built with a cutting-edge cyber-terminal aesthetic. It leverages Google Gemini AI for real-time analysis, adaptive knowledge checks, and an immersive 'Neural Academy' training environment.
+PhishGuard is a fully gamified phishing-awareness training app built entirely in React with an aggressive cyber/military terminal aesthetic. It features real-time threat simulations, adaptive quizzes, and an AI-powered neural academy.
 
 ---
 
