@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Helpers ──────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isFileSizeOk(maxMB) {
+      return request.resource.size <= maxMB * 1024 * 1024;
+    }
+
+    // ─── Avatars  /avatars/{uid}/{fileName} ───────────────────────
+    match /avatars/{uid}/{fileName} {
+      // Anyone signed-in can view any avatar
+      allow read: if isSignedIn();
+
+      // Only the owner can upload/replace their avatar (max 2 MB, images only)
+      allow write: if isOwner(uid) && isImage() && isFileSizeOk(2);
+
+      allow delete: if isOwner(uid);
+    }
+
+    // ─── Gallery  /gallery/{uid}/{fileName} ───────────────────────
+    match /gallery/{uid}/{fileName} {
+      // Any signed-in user can view gallery images
+      allow read: if isSignedIn();
+
+      // Owner can upload images (max 5 MB)
+      allow write: if isOwner(uid) && isImage() && isFileSizeOk(5);
+
+      // Only the owner can delete their uploads
+      allow delete: if isOwner(uid);
+    }
+
+    // ─── Catch-all – deny everything else ─────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

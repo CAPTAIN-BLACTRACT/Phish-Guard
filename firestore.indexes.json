@@ -1,0 +1,71 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "quizResults",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "uid",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "completedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "simulatorLogs",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "uid",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "attemptedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "leaderboard",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "xp",
+                    "order": "DESCENDING"
+                },
+                {
+                    "fieldPath": "updatedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "gallery",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "submittedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "gallery",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "likes",
+                    "order": "DESCENDING"
+                },
+                {
+                    "fieldPath": "submittedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}
