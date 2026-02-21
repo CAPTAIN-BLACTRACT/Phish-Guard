@@ -28,9 +28,9 @@ export function UserProvider({ children }) {
     }, [user]);
 
     /** Award XP, persist to Firestore, and update local state. */
-    const awardXP = useCallback(async (pts, context = {}) => {
+    const awardXP = useCallback(async (pts) => {
         if (!user) return;
-        const updated = await dbAwardXP(user.uid, pts, context);
+        const updated = await dbAwardXP(user.uid, pts);
         setProfile((prev) => ({ ...prev, ...updated }));
         return updated;
     }, [user]);

@@ -1,58 +1,52 @@
 import { useState, useCallback } from "react";
 import { XP_PER_LEVEL } from "../constants";
 
-const MAX_LEVEL = 10;
-
-function levelFromXP(totalXP) {
-  let resolvedLevel = 1;
-  while (resolvedLevel < MAX_LEVEL && totalXP >= (XP_PER_LEVEL[resolvedLevel] ?? Infinity)) {
-    resolvedLevel += 1;
-  }
-  return resolvedLevel;
-}
-
 /**
  * useXPSystem
  * Manages player XP, level, and level-up notifications.
+ *
+ * Returns:
+ *   xp          – current XP total
+ *   level       – current level (1–10)
+ *   addXP(pts)  – award XP and trigger level-up if threshold crossed
+ *   xpPct()     – 0–100 progress % within current level
+ *   xpToNext()  – XP remaining until next level
+ *   levelUpData – { title, msg, emoji } when a level-up just occurred, null otherwise
+ *   clearLevelUp() – dismiss the level-up overlay
  */
 export function useXPSystem(initialXP = 1250, initialLevel = 8) {
-  const [xp, setXP] = useState(initialXP);
-  const [level, setLevel] = useState(initialLevel);
+  const [xp, setXP]               = useState(initialXP);
+  const [level, setLevel]         = useState(initialLevel);
   const [levelUpData, setLevelUp] = useState(null);
 
-  const addXP = useCallback((pts) => {
-    setXP((prev) => {
-      const next = Math.max(0, prev + pts);
-      const computedLevel = levelFromXP(next);
-
-      setLevel((prevLevel) => {
-        if (computedLevel > prevLevel) {
+  const addXP = useCallback(
+    (pts) => {
+      setXP((prev) => {
+        const next        = prev + pts;
+        const nextThresh  = XP_PER_LEVEL[level] ?? next + 9999;
+        if (next >= nextThresh && level < 10) {
+          setLevel((l) => l + 1);
           setLevelUp({
             title: "LEVEL UP!",
-            msg: `You advanced to Level ${computedLevel}`,
-            emoji: "!",
+            msg:   `You advanced to Level ${level + 1}`,
+            emoji: "🎉",
           });
         }
-        return computedLevel;
+        return next;
       });
-
-      return next;
-    });
-  }, []);
+    },
+    [level]
+  );
 
   const xpPct = () => {
-    if (level >= MAX_LEVEL) return 100;
     const start = XP_PER_LEVEL[level - 1] ?? 0;
-    const end = XP_PER_LEVEL[level] ?? start + 1000;
-    const range = Math.max(1, end - start);
-    const rawPct = ((xp - start) / range) * 100;
-    return Math.min(100, Math.max(0, rawPct));
+    const end   = XP_PER_LEVEL[level]     ?? start + 1000;
+    return Math.min(100, ((xp - start) / (end - start)) * 100);
   };
 
   const xpToNext = () => {
-    if (level >= MAX_LEVEL) return 0;
     const end = XP_PER_LEVEL[level] ?? xp + 1000;
-    return Math.max(0, end - xp);
+    return end - xp;
   };
 
   return {

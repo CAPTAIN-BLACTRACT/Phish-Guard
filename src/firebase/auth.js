@@ -96,10 +96,7 @@ export async function deleteAccount() {
     if (!auth.currentUser) return;
     const uid = auth.currentUser.uid;
     try {
-        const cleanup = await deleteUserData(uid);
-        if (cleanup?.failed > 0) {
-            console.warn("Account cleanup completed with partial failures:", cleanup.failures);
-        }
+        await deleteUserData(uid);
         await deleteUser(auth.currentUser);
     } catch (e) {
         console.error("Deletion failed:", e);

@@ -70,7 +70,13 @@ export default function LoginPage({ onClose }) {
                     position: "relative", animation: "loginPop 0.4s ease both"
                 }}
             >
-                <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "1.4rem", cursor: "pointer" }}>✕</button>
+                <button
+                    onClick={onClose}
+                    aria-label="Close authentication"
+                    style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "1.4rem", cursor: "pointer" }}
+                >
+                    ✕
+                </button>
 
                 <div style={{ textAlign: "center", marginBottom: 24 }}>
                     <div style={{ fontSize: "2.2rem", marginBottom: 8 }}>🛡️</div>
@@ -97,45 +103,81 @@ export default function LoginPage({ onClose }) {
                         </button>
                         <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", margin: "12px 0", fontSize: "0.75rem" }}>— OR —</div>
                         <form onSubmit={handleSignIn}>
-                            <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 12 }} type="email" placeholder="Email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required />
-                            <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 6 }} type="password" placeholder="Password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required />
+                            <div style={{ marginBottom: 12 }}>
+                                <label htmlFor="login-email" style={{ display: "block", color: "var(--txt2)", fontSize: "0.7rem", marginBottom: 6, fontFamily: "Share Tech Mono", letterSpacing: "0.05em" }}>
+                                    {"// EMAIL_ADDRESS"}
+                                </label>
+                                <input id="login-email" style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff" }} type="email" placeholder="agent@phishguard.gov" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                            </div>
+                            <div style={{ marginBottom: 6 }}>
+                                <label htmlFor="login-password" style={{ display: "block", color: "var(--txt2)", fontSize: "0.7rem", marginBottom: 6, fontFamily: "Share Tech Mono", letterSpacing: "0.05em" }}>
+                                    {"// ACCESS_KEY"}
+                                </label>
+                                <input id="login-password" style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff" }} type="password" placeholder="••••••••" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required />
+                            </div>
                             <div style={{ textAlign: "right", marginBottom: 16 }}>
-                                <span onClick={() => setMode("reset")} style={{ cursor: "pointer", color: "var(--txt2)", fontSize: "0.75rem", fontFamily: "Share Tech Mono" }}>Forgot Password?</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setMode("reset")}
+                                    style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--txt2)", fontSize: "0.75rem", fontFamily: "Share Tech Mono", textDecoration: "underline" }}
+                                >
+                                    Forgot Password?
+                                </button>
                             </div>
                             <button type="submit" disabled={busy} style={{ ...T.btnP, width: "100%" }}>{busy ? "Authenticating..." : "Sign In"}</button>
                         </form>
                         <div style={{ marginTop: 20, padding: 12, borderRadius: 8, background: "rgba(0,245,255,0.05)", border: "1px dashed rgba(0,245,255,0.3)" }}>
-                            <div style={{ fontSize: "0.7rem", color: "#00f5ff", fontFamily: "Share Tech Mono", marginBottom: 4 }}>// DEMO CONSOLE</div>
+                            <div style={{ fontSize: "0.7rem", color: "#00f5ff", fontFamily: "Share Tech Mono", marginBottom: 4 }}>{"// DEMO CONSOLE"}</div>
                             <div style={{ fontSize: "0.75rem", color: "#90a4ae" }}>Email: <span style={{ color: "#fff" }}>sumitboy2005@gmail.com</span></div>
                             <div style={{ fontSize: "0.75rem", color: "#90a4ae" }}>Pass: <span style={{ color: "#fff" }}>demo123</span></div>
                         </div>
                         <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.85rem", color: "var(--txt2)" }}>
-                            New recruit? <span onClick={() => setMode("register")} style={{ cursor: "pointer", color: "#00f5ff" }}>Create Account</span>
+                            New recruit? <button type="button" onClick={() => setMode("register")} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#00f5ff", fontSize: "inherit" }}>Create Account</button>
                         </div>
                     </>
                 )}
 
                 {mode === "reset" && (
                     <>
-                        <p style={{ color: "var(--txt2)", fontSize: "0.85rem", marginBottom: 20, textAlign: "center" }}>Enter your email and we'll send a transmission to reset your credentials.</p>
+                        <p style={{ color: "var(--txt2)", fontSize: "0.85rem", marginBottom: 20, textAlign: "center" }}>Enter your email and we&apos;ll send a transmission to reset your credentials.</p>
                         <form onSubmit={handleReset}>
-                            <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 16 }} type="email" placeholder="Email address" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                            <div style={{ marginBottom: 16 }}>
+                                <label htmlFor="reset-email" style={{ display: "block", color: "var(--txt2)", fontSize: "0.7rem", marginBottom: 6, fontFamily: "Share Tech Mono", letterSpacing: "0.05em" }}>
+                                    {"// RECOVERY_EMAIL"}
+                                </label>
+                                <input id="reset-email" style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff" }} type="email" placeholder="Enter your email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                            </div>
                             <button type="submit" disabled={busy} style={{ ...T.btnP, width: "100%" }}>{busy ? "Transmitting..." : "Send Reset Link"}</button>
                         </form>
                         <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.85rem", color: "var(--txt2)" }}>
-                            Back to <span onClick={() => setMode("login")} style={{ cursor: "pointer", color: "#00f5ff" }}>Sign In</span>
+                            Back to <button type="button" onClick={() => setMode("login")} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#00f5ff", fontSize: "inherit" }}>Sign In</button>
                         </div>
                     </>
                 )}
 
                 {mode === "register" && (
                     <form onSubmit={handleRegister}>
-                        <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 12 }} type="text" placeholder="Full Name" autoComplete="name" value={name} onChange={e => setName(e.target.value)} required />
-                        <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 12 }} type="email" placeholder="Email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required />
-                        <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 16 }} type="password" placeholder="Password (min 6 chars)" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required />
+                        <div style={{ marginBottom: 12 }}>
+                            <label htmlFor="reg-name" style={{ display: "block", color: "var(--txt2)", fontSize: "0.7rem", marginBottom: 6, fontFamily: "Share Tech Mono", letterSpacing: "0.05em" }}>
+                                {"// FULL_NAME"}
+                            </label>
+                            <input id="reg-name" style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff" }} type="text" placeholder="e.g. Agent Smith" autoComplete="name" value={name} onChange={e => setName(e.target.value)} required />
+                        </div>
+                        <div style={{ marginBottom: 12 }}>
+                            <label htmlFor="reg-email" style={{ display: "block", color: "var(--txt2)", fontSize: "0.7rem", marginBottom: 6, fontFamily: "Share Tech Mono", letterSpacing: "0.05em" }}>
+                                {"// EMAIL_ADDRESS"}
+                            </label>
+                            <input id="reg-email" style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff" }} type="email" placeholder="Enter your email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                        </div>
+                        <div style={{ marginBottom: 16 }}>
+                            <label htmlFor="reg-password" style={{ display: "block", color: "var(--txt2)", fontSize: "0.7rem", marginBottom: 6, fontFamily: "Share Tech Mono", letterSpacing: "0.05em" }}>
+                                {"// NEW_ACCESS_KEY"}
+                            </label>
+                            <input id="reg-password" style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff" }} type="password" placeholder="Min 6 characters" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required />
+                        </div>
                         <button type="submit" disabled={busy} style={{ ...T.btnP, width: "100%" }}>{busy ? "Initializing..." : "Register Now"}</button>
                         <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.85rem", color: "var(--txt2)" }}>
-                            Already guarded? <span onClick={() => setMode("login")} style={{ cursor: "pointer", color: "#00f5ff" }}>Sign In</span>
+                            Already guarded? <button type="button" onClick={() => setMode("login")} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#00f5ff", fontSize: "inherit" }}>Sign In</button>
                         </div>
                     </form>
                 )}

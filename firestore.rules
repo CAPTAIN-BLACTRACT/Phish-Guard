@@ -1,6 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ─── Helpers ──────────────────────────────────────────────────
     function isSignedIn() {
       return request.auth != null;
     }
@@ -9,78 +11,35 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function createsOwnUid() {
-      return isSignedIn() && request.resource.data.uid == request.auth.uid;
-    }
-
-    function ownsUid() {
-      return isSignedIn() && resource.data.uid == request.auth.uid;
-    }
-
-    // User profile and leaderboard
+    // ─── User Profiles ────────────────────────────────────────────
     match /users/{userId} {
+      // Leaderboard requires public read of XP/DisplayName
       allow read: if true;
+      // Only the agent can modify their own dossier
       allow write: if isOwner(userId);
     }
 
-    match /leaderboard/{userId} {
-      allow read: if true;
-      allow write: if isOwner(userId);
-    }
-
-    match /leaderboardSeed/{docId} {
-      allow read: if true;
-      allow write: if isSignedIn();
-    }
-
-    // User-owned activity collections
-    match /quizResults/{docId} {
-      allow create: if createsOwnUid();
-      allow read, update, delete: if ownsUid();
-    }
-
-    match /simulatorLogs/{docId} {
-      allow create: if createsOwnUid();
-      allow read, update, delete: if ownsUid();
-    }
-
-    match /activity_logs/{docId} {
-      allow create: if createsOwnUid();
-      allow read, update, delete: if ownsUid();
-    }
-
-    match /feedback/{docId} {
-      allow create: if createsOwnUid();
-      allow read, update, delete: if ownsUid();
-    }
-
-    match /gallery/{itemId} {
-      allow read: if true;
-      allow create: if createsOwnUid();
-      allow update, delete: if ownsUid();
-    }
-
-    // Training/config content (hackathon-friendly write policy)
+    // ─── Knowledge Hub (Quizzes) ──────────────────────────────────
     match /quizzes/{quizId} {
       allow read: if true;
+      // Admin-only write in production, restricted to authed for hackathon
       allow write: if isSignedIn();
     }
 
-    match /quizQuestions/{docId} {
+    // ─── Intel Repository (Gallery) ───────────────────────────────
+    match /gallery/{itemId} {
       allow read: if true;
+      // Any verified agent can contribute threat intelligence
       allow write: if isSignedIn();
     }
 
-    match /simScenarios/{docId} {
-      allow read: if true;
+    // ─── Feedback & Intel Reports ─────────────────────────────────
+    match /feedback/{docId} {
+      allow read: if false; // Private intel
       allow write: if isSignedIn();
     }
 
-    match /classes/{classId} {
-      allow read, write: if isSignedIn();
-    }
-
-    // Legacy logs collection
+    // ─── Simulation Logs (Analytics) ──────────────────────────────
     match /logs/{logId} {
       allow read: if false;
       allow write: if isSignedIn();

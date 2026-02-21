@@ -5,10 +5,10 @@ import { seedDatabase } from "./firebase/seed";
 import { GLOBAL_CSS } from "./styles/globalStyles";
 import { useXPSystem } from "./hooks/useXPSystem";
 import { useToast } from "./hooks/useToast";
-import { useTurtleTip } from "./hooks/useTurtleTip";
+import { useFinnTip } from "./hooks/useFinnTip";
 import {
   Navbar, Toast,
-  LevelUpOverlay, Turtle, CyberBackground
+  LevelUpOverlay, Finn, CyberBackground
 } from "./components";
 import {
   HomePage, QuizPage, SimulatorPage,
@@ -108,7 +108,7 @@ function AdminRoute({ children }) {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
       <form onSubmit={handleLogin} style={{ background: "rgba(0,12,26,0.95)", padding: 40, border: "1px solid rgba(0,245,255,0.2)", borderRadius: 8, display: "flex", flexDirection: "column", gap: 20 }}>
         <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#00f5ff", textAlign: "center", margin: 0 }}>ADMIN ACCESS</h2>
-        <input type="password" autoComplete="current-password" value={pass} onChange={e => setPass(e.target.value)} placeholder="Enter password" maxLength={32} style={{ padding: 10, background: "rgba(255,255,255,0.05)", border: "1px solid #00f5ff", color: "white" }} />
+        <input type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="Enter password" maxLength={32} style={{ padding: 10, background: "rgba(255,255,255,0.05)", border: "1px solid #00f5ff", color: "white" }} />
         <button type="submit" style={{ padding: 10, background: "#00f5ff", border: "none", color: "black", fontWeight: 'bold', cursor: 'pointer' }}>LOGIN</button>
       </form>
     </div>
@@ -133,17 +133,10 @@ function AppInner() {
   const [showLogin, setShowLogin] = useState(false);
   const { user } = useAuth();
   const { profile } = useUser();
-  const shouldClientSeed = import.meta.env.DEV || import.meta.env.VITE_ENABLE_CLIENT_SEED === "true";
 
   useEffect(() => {
-    if (!user?.uid || !shouldClientSeed) return;
-    void seedDatabase({
-      uid: user.uid,
-      displayName: user.displayName || null,
-      email: user.email || null,
-      photoURL: user.photoURL || null,
-    });
-  }, [user?.uid, shouldClientSeed]);
+    seedDatabase();
+  }, []);
 
   const { xp, level, addXP, xpPct, xpToNext,
     levelUpData, clearLevelUp } = useXPSystem(
@@ -160,9 +153,7 @@ function AppInner() {
   }, [profile?.xp]);
 
   const { toast, showToast } = useToast();
-  const { currentTip, nextTip } = useTurtleTip(
-    profile?.displayName || user?.displayName || "OPERATOR"
-  );
+  const { currentTip, nextTip } = useFinnTip();
 
   // Always read streak from live Firestore profile
   const STREAK = profile?.streak ?? 0;
@@ -263,7 +254,7 @@ function AppInner() {
       <Toast msg={toast.msg} type={toast.type} visible={toast.visible} />
       <LevelUpOverlay data={levelUpData} onClose={clearLevelUp} />
       {!["/neural-academy", "/ai-learning"].includes(location.pathname) && (
-        <Turtle tip={currentTip} onClick={nextTip} />
+        <Finn tip={currentTip} onClick={nextTip} />
       )}
 
       {/* ── Login Modal ── */}

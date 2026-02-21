@@ -167,16 +167,7 @@ export function SimulatorPage({ showToast }) {
     setSubmitted(true);
     const found = stage.phish.flags.filter((f) => flagged.has(f.id)).length;
     const xpGain = Math.round((found / total) * 80);
-    await awardXP(xpGain, {
-      reason: "SIMULATION_SUBMISSION",
-      metadata: {
-        stageId: stage.id || stageIdx,
-        flagsFound: found,
-        totalFlags: total,
-        completed: found === total,
-        formula: `round((${found}/${total})*80)`,
-      },
-    });
+    await awardXP(xpGain);
     if (user) {
       try {
         await Promise.all([

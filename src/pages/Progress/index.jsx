@@ -34,24 +34,6 @@ function SectionLabel({ children }) {
   );
 }
 
-function buildEmptyWeeklySeries() {
-  const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
-  const today = new Date();
-  const rows = [];
-
-  for (let i = 6; i >= 0; i -= 1) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    rows.push({
-      label: dayLabels[date.getDay()],
-      xp: 0,
-      key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
-    });
-  }
-
-  return rows;
-}
-
 // ─── PROGRESS PAGE ────────────────────────────────────────────────────────────
 export function ProgressPage({ xp, level, xpPct, xpToNext }) {
   const navigate = useNavigate();
@@ -60,7 +42,6 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
   const [rankStats, setRankStats] = useState({ rank: null, totalUsers: 0, xp: 0 });
   const [rankLoading, setRankLoading] = useState(false);
   const [weeklyXP, setWeeklyXP] = useState(0);
-  const [weeklySeries, setWeeklySeries] = useState(() => buildEmptyWeeklySeries());
 
   const quizAttempts = profile?.quizAttempts || profile?.quizzesCompleted || 0;
   const simAttempts = profile?.simulationsDone || 0;
@@ -88,7 +69,6 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
     : rankPercentile
       ? `Top ${rankPercentile}% worldwide`
       : "Rank unavailable";
-  const weeklyMax = Math.max(...weeklySeries.map((row) => Number(row?.xp) || 0), 1);
 
     const agentName = profile?.displayName || user?.displayName || "Guest Agent";
   const agentInitials = agentName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
@@ -106,19 +86,11 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
         if (!mounted) return;
         setRankStats(rankData);
         setWeeklyXP(weeklyData?.totalXp || 0);
-        const nextSeries = Array.isArray(weeklyData?.byDay) && weeklyData.byDay.length > 0
-          ? weeklyData.byDay
-          : buildEmptyWeeklySeries();
-        setWeeklySeries(nextSeries.map((row) => ({
-          ...row,
-          xp: Number(row?.xp) || 0,
-        })));
       })
       .catch(() => {
         if (!mounted) return;
         setRankStats({ rank: null, totalUsers: 0, xp: 0 });
         setWeeklyXP(0);
-        setWeeklySeries(buildEmptyWeeklySeries());
       })
       .finally(() => {
         if (mounted) setRankLoading(false);
@@ -443,36 +415,26 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
             <div style={{ ...T.card, padding: 28 }}>
               <SectionLabel>WEEKLY ACTIVITY</SectionLabel>
               <div style={{ display: "flex", gap: 8, alignItems: "flex-end", height: 70 }}>
-                {weeklySeries.map((row, i) => {
-                  const latest = i === weeklySeries.length - 1;
-                  const heightPct = Math.round(((Number(row?.xp) || 0) / weeklyMax) * 100);
-                  const visualHeight = row?.xp > 0 ? Math.max(10, heightPct) : 6;
-
-                  return (
-                    <div key={row?.key || i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      <div
-                        title={`${row?.xp || 0} XP`}
-                        style={{
-                          width: "100%",
-                          height: `${visualHeight}%`,
-                          background: latest
-                            ? "linear-gradient(180deg,#00f5ff,#00ff9d)"
-                            : "rgba(0,245,255,.18)",
-                          borderRadius: "3px 3px 0 0",
-                          boxShadow: latest ? "0 0 12px rgba(0,245,255,.4)" : "none",
-                          transition: "all .3s",
-                          minHeight: 4,
-                        }}
-                      />
-                      <span style={{
-                        fontFamily: "Share Tech Mono, monospace", fontSize: ".58rem",
-                        color: latest ? "#00f5ff" : "var(--txt2)",
-                      }}>
-                        {row?.label || "-"}
-                      </span>
-                    </div>
-                  );
-                })}
+                {[40, 75, 55, 90, 60, 100, 80].map((h, i) => (
+                  <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <div style={{
+                      width: "100%",
+                      height: `${h}%`,
+                      background: i === 6
+                        ? "linear-gradient(180deg,#00f5ff,#00ff9d)"
+                        : "rgba(0,245,255,.18)",
+                      borderRadius: "3px 3px 0 0",
+                      boxShadow: i === 6 ? "0 0 12px rgba(0,245,255,.4)" : "none",
+                      transition: "all .3s",
+                    }} />
+                    <span style={{
+                      fontFamily: "Share Tech Mono, monospace", fontSize: ".58rem",
+                      color: i === 6 ? "#00f5ff" : "var(--txt2)",
+                    }}>
+                      {["M", "T", "W", "T", "F", "S", "S"][i]}
+                    </span>
+                  </div>
+                ))}
               </div>
               <div style={{
                 marginTop: 12, fontFamily: "Share Tech Mono, monospace",

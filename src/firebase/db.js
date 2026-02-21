@@ -66,21 +66,16 @@ export async function updateUserProfile(uid, fields) {
 
 /**
  * Award XP and update level if needed.
- * Optional context helps audit where the XP came from.
  * Returns the new { xp, level } values.
  */
-export async function awardXP(uid, pts, context = {}) {
+export async function awardXP(uid, pts) {
     const ref = doc(db, "users", uid);
     const snap = await getDoc(ref);
     const data = snap.data() ?? { xp: 0, level: 1 };
-    const oldXP = Number.isFinite(data.xp) ? data.xp : 0;
-    const oldLevel = Number.isFinite(data.level) ? data.level : 1;
-    const rawPts = Number(pts);
-    const xpEarned = Math.max(0, Number.isFinite(rawPts) ? Math.round(rawPts) : 0);
 
     const XP_PER_LEVEL = [0, 500, 1200, 2100, 3200, 4500, 6000, 7700, 9600, 11700];
-    const newXP = oldXP + xpEarned;
-    let newLevel = oldLevel;
+    const newXP = (data.xp ?? 0) + pts;
+    let newLevel = data.level ?? 1;
 
     while (newLevel < 10 && newXP >= (XP_PER_LEVEL[newLevel] ?? Infinity)) {
         newLevel++;
@@ -97,23 +92,6 @@ export async function awardXP(uid, pts, context = {}) {
         level: newLevel,
         updatedAt: serverTimestamp(),
     }, { merge: true });
-
-    const reason = typeof context === "string"
-        ? context
-        : (context?.reason || "GENERAL");
-    const sourceMetadata = context?.metadata && typeof context.metadata === "object" && !Array.isArray(context.metadata)
-        ? context.metadata
-        : {};
-
-    await safeLogPlatformAction(uid, "XP_AWARDED", {
-        ...sourceMetadata,
-        reason,
-        xpEarned,
-        xpBefore: oldXP,
-        xpAfter: newXP,
-        levelBefore: oldLevel,
-        levelAfter: newLevel,
-    });
 
     return { xp: newXP, level: newLevel };
 }
@@ -164,7 +142,7 @@ export async function saveQuizResult(payloadOrUid, maybePayload = {}) {
         lastActive: serverTimestamp(),
     }, { merge: true });
 
-    await safeLogPlatformAction(uid, "QUIZ_ATTEMPT", {
+    await logPlatformAction(uid, "QUIZ_ATTEMPT", {
         category,
         isCorrect,
         score,
@@ -228,7 +206,7 @@ export async function logSimulatorAttempt(payloadOrUid, maybePayload = {}) {
         lastActive: serverTimestamp(),
     }, { merge: true });
 
-    await safeLogPlatformAction(uid, "SIMULATION_ATTEMPT", {
+    await logPlatformAction(uid, "SIMULATION_ATTEMPT", {
         scenarioId,
         detected,
         flagsFound,
@@ -441,7 +419,7 @@ export async function saveTrainingModuleProgress({
         lastActive: serverTimestamp(),
     }, { merge: true });
 
-    await safeLogPlatformAction(uid, completed ? "TRAINING_MODULE_COMPLETED" : "TRAINING_RESOURCE_OPENED", {
+    await logPlatformAction(uid, completed ? "TRAINING_MODULE_COMPLETED" : "TRAINING_RESOURCE_OPENED", {
         moduleId,
         moduleName: moduleName || moduleId,
         resourceType,
@@ -468,14 +446,6 @@ export async function logPlatformAction(uid, action, metadata = {}) {
     });
 }
 
-async function safeLogPlatformAction(uid, action, metadata = {}) {
-    try {
-        await logPlatformAction(uid, action, metadata);
-    } catch (e) {
-        console.warn(`Telemetry log skipped for ${action}:`, e?.code || e?.message || e);
-    }
-}
-
 /** Read a user's recent activity logs (newest first). */
 export async function getUserActivityLogs(uid, topN = 25) {
     if (!uid) return [];
@@ -496,247 +466,50 @@ export async function getUserActivityLogs(uid, topN = 25) {
         .slice(0, topN);
 }
 
-/** Build a downloadable audit dataset across activity, quiz, and simulator logs. */
-export async function getUserAuditExportRows(uid, maxPerCollection = 500) {
-    if (!uid) return [];
-    const safeLimit = Math.max(50, Math.min(5000, Number(maxPerCollection) || 500));
-    const numberOrBlank = (value) => {
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : "";
-    };
-
-    const [activitySnap, quizSnap, simulatorSnap] = await Promise.all([
-        getDocs(query(collection(db, "activity_logs"), where("uid", "==", uid), limit(safeLimit))),
-        getDocs(query(collection(db, "quizResults"), where("uid", "==", uid), limit(safeLimit))),
-        getDocs(query(collection(db, "simulatorLogs"), where("uid", "==", uid), limit(safeLimit))),
-    ]);
-
-    const rows = [];
-
-    activitySnap.docs.forEach((d) => {
-        const item = d.data();
-        const when = item?.timestamp?.toDate?.() || null;
-        rows.push({
-            source: "activity_log",
-            id: d.id,
-            occurredAt: when ? when.toISOString() : "",
-            action: item?.action || "",
-            xpEarned: Number(item?.metadata?.xpEarned ?? item?.metadata?.xpGain ?? 0) || 0,
-            xpBefore: numberOrBlank(item?.metadata?.xpBefore),
-            xpAfter: numberOrBlank(item?.metadata?.xpAfter),
-            levelBefore: numberOrBlank(item?.metadata?.levelBefore),
-            levelAfter: numberOrBlank(item?.metadata?.levelAfter),
-            reason: item?.metadata?.reason || "",
-            difficulty: item?.metadata?.difficulty || "",
-            questionId: item?.metadata?.questionId || "",
-            stageId: item?.metadata?.stageId || "",
-            moduleId: item?.metadata?.moduleId || "",
-            correct: item?.metadata?.correct === true ? "true" : item?.metadata?.correct === false ? "false" : "",
-            score: numberOrBlank(item?.metadata?.score),
-            total: numberOrBlank(item?.metadata?.total),
-            flagsFound: numberOrBlank(item?.metadata?.flagsFound),
-            totalFlags: numberOrBlank(item?.metadata?.totalFlags),
-            metadata: JSON.stringify(item?.metadata || {}),
-            _sortMs: when ? when.getTime() : 0,
-        });
-    });
-
-    quizSnap.docs.forEach((d) => {
-        const item = d.data();
-        const when = item?.completedAt?.toDate?.() || null;
-        rows.push({
-            source: "quiz_result",
-            id: d.id,
-            occurredAt: when ? when.toISOString() : "",
-            action: item?.correct ? "QUIZ_CORRECT" : "QUIZ_INCORRECT",
-            xpEarned: Number(item?.xpEarned ?? 0) || 0,
-            xpBefore: "",
-            xpAfter: "",
-            levelBefore: "",
-            levelAfter: "",
-            reason: "QUIZ_RESULT",
-            difficulty: item?.difficulty || "",
-            questionId: item?.questionId || "",
-            stageId: "",
-            moduleId: "",
-            correct: item?.correct === true ? "true" : item?.correct === false ? "false" : "",
-            score: numberOrBlank(item?.score),
-            total: numberOrBlank(item?.total),
-            flagsFound: "",
-            totalFlags: "",
-            metadata: JSON.stringify({
-                category: item?.category || "",
-            }),
-            _sortMs: when ? when.getTime() : 0,
-        });
-    });
-
-    simulatorSnap.docs.forEach((d) => {
-        const item = d.data();
-        const when = item?.attemptedAt?.toDate?.() || null;
-        rows.push({
-            source: "simulator_log",
-            id: d.id,
-            occurredAt: when ? when.toISOString() : "",
-            action: item?.detected ? "SIMULATION_DETECTED" : "SIMULATION_MISSED",
-            xpEarned: Number(item?.xpEarned ?? 0) || 0,
-            xpBefore: "",
-            xpAfter: "",
-            levelBefore: "",
-            levelAfter: "",
-            reason: "SIMULATOR_RESULT",
-            difficulty: "",
-            questionId: "",
-            stageId: item?.scenarioId || "",
-            moduleId: "",
-            correct: item?.detected === true ? "true" : item?.detected === false ? "false" : "",
-            score: numberOrBlank(item?.flagsFound),
-            total: numberOrBlank(item?.totalFlags),
-            flagsFound: numberOrBlank(item?.flagsFound),
-            totalFlags: numberOrBlank(item?.totalFlags),
-            metadata: JSON.stringify({
-                timeTakenMs: item?.timeTakenMs ?? "",
-            }),
-            _sortMs: when ? when.getTime() : 0,
-        });
-    });
-
-    rows.sort((a, b) => b._sortMs - a._sortMs);
-    return rows.map(({ _sortMs, ...rest }) => rest);
-}
-
 /** Get XP earned in the last N days from canonical XP-granting activity logs. */
 export async function getUserWeeklyXPEarned(uid, days = 7) {
-    if (!uid) return { totalXp: 0, events: 0, byDay: [] };
+    if (!uid) return { totalXp: 0, events: 0 };
 
     const safeDays = Math.max(1, Math.min(30, Number.isFinite(days) ? days : 7));
-    const since = new Date();
-    since.setHours(0, 0, 0, 0);
-    since.setDate(since.getDate() - (safeDays - 1));
-    const legacyXpActions = new Set([
+    const since = new Date(Date.now() - safeDays * 24 * 60 * 60 * 1000);
+    const canonicalXpActions = new Set([
         "QUIZ_ANSWERED",
         "SIMULATION_SUBMITTED",
         "TRAINING_MODULE_COMPLETED",
     ]);
-    const dayLabelByIndex = ["S", "M", "T", "W", "T", "F", "S"];
-    const toDayKey = (date) => {
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, "0");
-        const dd = String(date.getDate()).padStart(2, "0");
-        return `${yyyy}-${mm}-${dd}`;
-    };
-    const byDay = Array.from({ length: safeDays }, (_, offset) => {
-        const date = new Date(since);
-        date.setDate(since.getDate() + offset);
-        return {
-            key: toDayKey(date),
-            label: dayLabelByIndex[date.getDay()],
-            xp: 0,
-        };
-    });
-    const dayIndexByKey = new Map(byDay.map((row, index) => [row.key, index]));
 
     const q = query(
         collection(db, "activity_logs"),
         where("uid", "==", uid),
-        limit(800)
+        limit(400)
     );
     const snap = await getDocs(q);
 
     let totalXp = 0;
     let events = 0;
 
-    const rows = snap.docs.map((d) => d.data());
-    const hasLedgerRows = rows.some((row) => {
-        const when = row?.timestamp?.toDate?.();
-        return Boolean(when && when >= since && row?.action === "XP_AWARDED");
-    });
-
-    rows.forEach((row) => {
+    snap.docs.forEach((d) => {
+        const row = d.data();
         const when = row?.timestamp?.toDate?.();
         if (!when || when < since) return;
+        if (!canonicalXpActions.has(row?.action)) return;
 
-        if (hasLedgerRows) {
-            if (row?.action !== "XP_AWARDED") return;
-        } else if (!legacyXpActions.has(row?.action)) {
-            return;
-        }
-
-        const xp = Number(row?.metadata?.xpEarned ?? row?.metadata?.xpGain ?? 0);
+        const xp = Number(row?.metadata?.xpEarned ?? 0);
         if (!Number.isFinite(xp) || xp <= 0) return;
 
         totalXp += xp;
         events += 1;
-
-        const dayKey = toDayKey(when);
-        const dayIndex = dayIndexByKey.get(dayKey);
-        if (dayIndex !== undefined) byDay[dayIndex].xp += xp;
     });
 
-    return { totalXp, events, byDay };
+    return { totalXp, events };
 }
 
 /** Purge all user data from Firestore. */
 export async function deleteUserData(uid) {
-    if (!uid) return { deleted: 0, failed: 0, failures: [] };
-
-    let deleted = 0;
-    let failed = 0;
-    const failures = [];
-
-    const tryDeleteDoc = async (ref, label) => {
-        try {
-            await deleteDoc(ref);
-            deleted += 1;
-        } catch (e) {
-            failed += 1;
-            failures.push({
-                target: label,
-                code: e?.code || "unknown",
-                message: e?.message || "Delete failed",
-            });
-        }
-    };
-
-    const deleteOwnedCollectionDocs = async (collectionName) => {
-        try {
-            // Iterate in chunks to avoid batch limits when users have many rows.
-            while (true) {
-                const snap = await getDocs(
-                    query(collection(db, collectionName), where("uid", "==", uid), limit(400))
-                );
-                if (snap.empty) break;
-
-                const batch = writeBatch(db);
-                snap.docs.forEach((row) => batch.delete(row.ref));
-                await batch.commit();
-                deleted += snap.size;
-
-                // Safety break when fewer docs than query limit were returned.
-                if (snap.size < 400) break;
-            }
-        } catch (e) {
-            failed += 1;
-            failures.push({
-                target: `${collectionName} (uid cleanup)`,
-                code: e?.code || "unknown",
-                message: e?.message || "Collection cleanup failed",
-            });
-        }
-    };
-
-    // Core profile docs
-    await tryDeleteDoc(doc(db, "users", uid), "users/{uid}");
-    await tryDeleteDoc(doc(db, "leaderboard", uid), "leaderboard/{uid}");
-
-    // Best-effort cleanup of owned records
-    await deleteOwnedCollectionDocs("quizResults");
-    await deleteOwnedCollectionDocs("simulatorLogs");
-    await deleteOwnedCollectionDocs("activity_logs");
-    await deleteOwnedCollectionDocs("gallery");
-    await deleteOwnedCollectionDocs("feedback");
-
-    return { deleted, failed, failures };
+    const batch = writeBatch(db);
+    batch.delete(doc(db, "users", uid));
+    batch.delete(doc(db, "leaderboard", uid));
+    await batch.commit();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -919,79 +692,6 @@ export async function syncSimScenariosToBackend(scenarios = []) {
             doc(db, "simScenarios", docId),
             {
                 ...scenario,
-                source: "seed",
-                seedIndex: idx + 1,
-                updatedAt: serverTimestamp(),
-            },
-            { merge: true }
-        );
-        synced += 1;
-    }
-
-    return { synced };
-}
-
-/** Upsert static gallery entries into backend so gallery is available from Firestore. */
-export async function syncGalleryEntriesToBackend(entries = [], owner = {}) {
-    const ownerUid = String(owner?.uid || "").trim();
-    if (!ownerUid) throw new Error("syncGalleryEntriesToBackend requires owner.uid.");
-
-    let synced = 0;
-
-    for (let idx = 0; idx < entries.length; idx += 1) {
-        const item = entries[idx];
-        if (!item?.title) continue;
-
-        const docId = `seed-gallery-${toSeedSlug(item.title, `item-${idx + 1}`)}-${idx + 1}`;
-        await setDoc(
-            doc(db, "gallery", docId),
-            {
-                uid: ownerUid,
-                displayName: owner?.displayName || "Admin Seeder",
-                title: item.title,
-                description: item.description || item.caption || "",
-                imageURL: item.imageURL || item.imageUrl || null,
-                // Keep both keys for compatibility with older reads.
-                imageUrl: item.imageURL || item.imageUrl || null,
-                type: item.type || "email",
-                status: item.status || "phish",
-                tags: Array.isArray(item.tags) && item.tags.length > 0
-                    ? item.tags
-                    : [item.type || "email", item.status || "phish"],
-                likes: Number(item.likes) || 0,
-                thumb: item.thumb || "",
-                source: "seed",
-                seedIndex: idx + 1,
-                submittedAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-            },
-            { merge: true }
-        );
-        synced += 1;
-    }
-
-    return { synced };
-}
-
-/** Upsert static leaderboard entries into a backend seed collection. */
-export async function syncLeaderboardSeedToBackend(entries = []) {
-    let synced = 0;
-
-    for (let idx = 0; idx < entries.length; idx += 1) {
-        const item = entries[idx];
-        const displayName = item?.displayName || item?.name;
-        if (!displayName) continue;
-
-        const docId = `seed-lb-${toSeedSlug(displayName, `user-${idx + 1}`)}-${idx + 1}`;
-        await setDoc(
-            doc(db, "leaderboardSeed", docId),
-            {
-                uid: `seed-${idx + 1}`,
-                displayName,
-                xp: Number(item?.xp) || 0,
-                level: Number(item?.level) || 1,
-                streak: Number(item?.streak) || 0,
-                badges: Array.isArray(item?.badges) ? item.badges : [],
                 source: "seed",
                 seedIndex: idx + 1,
                 updatedAt: serverTimestamp(),

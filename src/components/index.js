@@ -3,7 +3,6 @@ export { Navbar } from "./Navbar";
 export { Toast } from "./Toast";
 export { LevelUpOverlay } from "./LevelUpOverlay";
 export { Finn } from "./Finn";
-export { Turtle } from "./Turtle";
 export { XPBar } from "./XPBar";
 export { CyberBackground } from "./canvas/CyberBackground";
 export { PageHeader } from "./PageHeader";

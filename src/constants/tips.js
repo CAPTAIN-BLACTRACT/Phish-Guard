@@ -9,5 +9,4 @@ export const TIPS = [
   "🔐 MFA is your last line of defense. Never disable it.",
 ];
 
-// Keep this aligned with Firestore awardXP thresholds in src/firebase/db.js.
-export const XP_PER_LEVEL = [0, 500, 1200, 2100, 3200, 4500, 6000, 7700, 9600, 11700];
+export const XP_PER_LEVEL = [0, 200, 400, 700, 1000, 1400, 1900, 2500, 3200, 4000, 5000];

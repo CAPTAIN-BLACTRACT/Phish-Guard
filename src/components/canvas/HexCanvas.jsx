@@ -7,28 +7,17 @@ export function HexCanvas() {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         let W, H, t = 0, raf;
-        const s = 42, hx = s * Math.sqrt(3), hy = s * 1.5;
-        let cols, rows;
-
         const resize = () => {
             W = canvas.width = window.innerWidth;
             H = canvas.height = window.innerHeight;
-            cols = Math.ceil(W / hx) + 2;
-            rows = Math.ceil(H / hy) + 2;
         };
         resize();
         window.addEventListener("resize", resize);
-
-        const HEX_POINTS = Array.from({ length: 6 }, (_, i) => {
-            const angle = (Math.PI / 3) * i - Math.PI / 6;
-            return { c: Math.cos(angle), s: Math.sin(angle) };
-        });
-
-        const hex = (x, y, radius, a) => {
+        const hex = (x, y, s, a) => {
             ctx.beginPath();
             for (let i = 0; i < 6; i++) {
-                const p = HEX_POINTS[i];
-                ctx.lineTo(x + radius * p.c, y + radius * p.s);
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                ctx.lineTo(x + s * Math.cos(angle), y + s * Math.sin(angle));
             }
             ctx.closePath();
             ctx.strokeStyle = `rgba(0,245,255,${a})`;
@@ -38,6 +27,8 @@ export function HexCanvas() {
         const draw = () => {
             ctx.clearRect(0, 0, W, H);
             t += 0.004;
+            const s = 42, hx = s * Math.sqrt(3), hy = s * 1.5;
+            const cols = Math.ceil(W / hx) + 2, rows = Math.ceil(H / hy) + 2;
             for (let r = -1; r < rows; r++) {
                 for (let c = -1; c < cols; c++) {
                     const x = c * hx + (r % 2 === 0 ? hx / 2 : 0), y = r * hy;

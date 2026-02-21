@@ -15,70 +15,22 @@ export function LeaderboardPage() {
   const { profile } = useUser();
 
   useEffect(() => {
-    let usersLoaded = false;
-    let seedLoaded = false;
-    let userRows = [];
-    let seedRows = [];
-
-    const applyRows = () => {
-      if (!usersLoaded || !seedLoaded) return;
-      if (userRows.length > 0) {
-        setLeaderboard(userRows);
-      } else if (seedRows.length > 0) {
-        setLeaderboard(seedRows);
+    const q = query(collection(db, "users"), orderBy("xp", "desc"), limit(20));
+    const unsub = onSnapshot(q, (snap) => {
+      if (snap.empty) {
+        setLeaderboard(LB_DATA); // Fallback if empty
       } else {
-        setLeaderboard(LB_DATA);
+        const data = snap.docs.map((doc, idx) => ({
+          id: doc.id,
+          rank: idx + 1,
+          ...doc.data(),
+          isYou: doc.id === user?.uid
+        }));
+        setLeaderboard(data);
       }
       setLoading(false);
-    };
-
-    const usersQuery = query(collection(db, "users"), orderBy("xp", "desc"), limit(20));
-    const seedQuery = query(collection(db, "leaderboardSeed"), orderBy("xp", "desc"), limit(20));
-
-    const unsubUsers = onSnapshot(
-      usersQuery,
-      (snap) => {
-        userRows = snap.docs.map((row, idx) => ({
-          id: row.id,
-          rank: idx + 1,
-          ...row.data(),
-          isYou: row.id === user?.uid,
-        }));
-        usersLoaded = true;
-        applyRows();
-      },
-      (error) => {
-        console.warn("Leaderboard users listener failed:", error?.code || error?.message || error);
-        usersLoaded = true;
-        userRows = [];
-        applyRows();
-      }
-    );
-
-    const unsubSeed = onSnapshot(
-      seedQuery,
-      (snap) => {
-        seedRows = snap.docs.map((row, idx) => ({
-          id: row.id,
-          rank: idx + 1,
-          ...row.data(),
-          isYou: false,
-        }));
-        seedLoaded = true;
-        applyRows();
-      },
-      (error) => {
-        console.warn("Leaderboard seed listener failed:", error?.code || error?.message || error);
-        seedLoaded = true;
-        seedRows = [];
-        applyRows();
-      }
-    );
-
-    return () => {
-      unsubUsers();
-      unsubSeed();
-    };
+    });
+    return () => unsub();
   }, [user]);
 
   const myRank = leaderboard.find(u => u.isYou)?.rank || "--";

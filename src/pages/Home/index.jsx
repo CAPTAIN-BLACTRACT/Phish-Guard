@@ -23,15 +23,9 @@ export function HomePage({ setPage }) {
 
   useEffect(() => {
     // Dynamic recruit count from Firestore
-    const unsub = onSnapshot(
-      collection(db, "users"),
-      (snap) => {
-        if (!snap.empty) setRecruitCount(12482 + snap.size);
-      },
-      (error) => {
-        console.warn("Users snapshot failed on Home:", error?.code || error?.message || error);
-      }
-    );
+    const unsub = onSnapshot(collection(db, "users"), (snap) => {
+      if (!snap.empty) setRecruitCount(12482 + snap.size);
+    });
     return () => unsub();
   }, []);
 
@@ -436,27 +430,25 @@ export function HomePage({ setPage }) {
               }}
             >
               <svg
-                viewBox="0 0 40 40"
+                viewBox="0 0 36 36"
                 fill="none"
                 width={28}
                 height={28}
                 style={{ filter: "drop-shadow(0 0 10px #00f5ff)", flexShrink: 0 }}
               >
-                <g transform="translate(2 1.5)">
-                  <path
-                    d="M18 2L4 8v12c0 8 6.67 14.93 14 16 7.33-1.07 14-7.99 14-16V8L18 2z"
-                    fill="rgba(0,229,255,.1)"
-                    stroke="#00e5ff"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M12 18l4 4 8-8"
-                    stroke="#00e5ff"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </g>
+                <path
+                  d="M18 2L4 8v12c0 8 6.67 14.93 14 16 7.33-1.07 14-7.99 14-16V8L18 2z"
+                  fill="rgba(0,229,255,.1)"
+                  stroke="#00e5ff"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M12 18l4 4 8-8"
+                  stroke="#00e5ff"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               <span style={{ display: "flex", alignItems: "center" }}>
                 Phish<span style={{ color: "#00f5ff", textShadow: "0 0 18px #00f5ff" }}>Guard</span>

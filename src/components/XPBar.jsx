@@ -1,13 +1,8 @@
-import { T } from "../styles";
-
 /**
  * XPBar
  * Reusable XP progress bar with level label and "to-next" counter.
  */
 export function XPBar({ xp, level, xpPct, xpToNext }) {
-  const xpRemaining = Number(xpToNext?.() ?? 0);
-  const maxLevelReached = level >= 10 || xpRemaining <= 0;
-
   return (
     <div style={{ marginBottom: 26 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
@@ -21,7 +16,7 @@ export function XPBar({ xp, level, xpPct, xpToNext }) {
           ⚡ XP: {xp.toLocaleString()} · Level {level}
         </span>
         <span style={{ fontSize: ".78rem", color: "#ffd600" }}>
-          {maxLevelReached ? "MAX LEVEL" : `${xpRemaining} XP to Level ${level + 1}`}
+          {xpToNext()} XP to Level {level + 1}
         </span>
       </div>
 
@@ -36,8 +31,12 @@ export function XPBar({ xp, level, xpPct, xpToNext }) {
       >
         <div
           style={{
-            ...T.xpBarFill,
+            height:     "100%",
+            background: "linear-gradient(90deg,#00f5ff,#00ff9d)",
+            borderRadius: 2,
             width:      `${xpPct()}%`,
+            boxShadow:  "0 0 12px #00f5ff",
+            transition: "width .6s",
           }}
         />
       </div>

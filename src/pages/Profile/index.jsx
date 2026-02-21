@@ -8,7 +8,7 @@ import { db, storage } from '../../firebase/config';
 import { doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { BADGES, MODULES } from '../../constants';
-import { createClass, joinClass, leaveClass, getClassInfo, getUserActivityLogs, getUserWeeklyXPEarned, getUserAuditExportRows, logPlatformAction } from '../../firebase/db';
+import { createClass, joinClass, leaveClass, getClassInfo, getUserActivityLogs, getUserWeeklyXPEarned, logPlatformAction } from '../../firebase/db';
 
 const INP = {
     width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)",
@@ -28,26 +28,21 @@ export function ProfilePage({ showToast }) {
     const [activityLogs, setActivityLogs] = useState([]);
     const [weeklyXP, setWeeklyXP] = useState(0);
     const [logsLoading, setLogsLoading] = useState(false);
-    const [exportingLogs, setExportingLogs] = useState(false);
     const [formData, setFormData] = useState({ displayName: "", bio: "", specialization: "General Defense" });
 
     const level = profile?.level || 1;
     const xp = profile?.xp || 0;
     const streak = profile?.streak || 0;
-    const agentCodename = `Agent_${(user?.uid || "agent").slice(0, 5).toUpperCase()}`;
-    const safeDisplayName = /^Agent_/i.test(profile?.displayName || "")
-        ? profile.displayName
-        : agentCodename;
 
     useEffect(() => {
         if (profile) {
             setFormData({
-                displayName: safeDisplayName,
+                displayName: profile.displayName || user?.displayName || "",
                 bio: profile.bio || "",
                 specialization: profile.specialization || "General Defense",
             });
         }
-    }, [profile, safeDisplayName]);
+    }, [profile, user]);
 
     useEffect(() => {
         if (profile?.classCode) {
@@ -141,91 +136,8 @@ export function ProfilePage({ showToast }) {
     const actionLabel = (action = "") =>
         action
             .toLowerCase()
-            .replaceAll("_", " ")
+            .replace(/_/g, " ")
             .replace(/\b\w/g, (c) => c.toUpperCase());
-
-    const csvEscape = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
-
-    const downloadActivityExcel = async () => {
-        if (!user?.uid || exportingLogs) return;
-        setExportingLogs(true);
-
-        try {
-            const rows = await getUserAuditExportRows(user.uid, 1200);
-            if (!rows.length) {
-                showToast("No logs found for export yet.", "inf");
-                return;
-            }
-
-            const headers = [
-                "Occurred At",
-                "Source",
-                "Action",
-                "XP Earned",
-                "XP Before",
-                "XP After",
-                "Level Before",
-                "Level After",
-                "Reason",
-                "Difficulty",
-                "Question ID",
-                "Stage ID",
-                "Module ID",
-                "Correct",
-                "Score",
-                "Total",
-                "Flags Found",
-                "Total Flags",
-                "Record ID",
-                "Metadata",
-            ];
-
-            const csvLines = [
-                headers.map(csvEscape).join(","),
-                ...rows.map((row) =>
-                    [
-                        row.occurredAt,
-                        row.source,
-                        row.action,
-                        row.xpEarned,
-                        row.xpBefore,
-                        row.xpAfter,
-                        row.levelBefore,
-                        row.levelAfter,
-                        row.reason,
-                        row.difficulty,
-                        row.questionId,
-                        row.stageId,
-                        row.moduleId,
-                        row.correct,
-                        row.score,
-                        row.total,
-                        row.flagsFound,
-                        row.totalFlags,
-                        row.id,
-                        row.metadata,
-                    ].map(csvEscape).join(",")
-                ),
-            ];
-
-            const blob = new Blob(["\uFEFF" + csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
-            const datePart = new Date().toISOString().slice(0, 10);
-            const anchor = document.createElement("a");
-            anchor.href = url;
-            anchor.download = `phishguard-activity-${datePart}.csv`;
-            document.body.appendChild(anchor);
-            anchor.click();
-            document.body.removeChild(anchor);
-            URL.revokeObjectURL(url);
-
-            showToast("Activity log export downloaded.", "ok");
-        } catch (e) {
-            showToast(e?.message || "Failed to export logs.", "ng");
-        } finally {
-            setExportingLogs(false);
-        }
-    };
 
     return (
         <div style={{ ...T.page, background: "transparent" }}>
@@ -248,7 +160,7 @@ export function ProfilePage({ showToast }) {
                                     <input type="file" hidden accept="image/*" onChange={handleAvatarChange} />
                                 </label>
                             </div>
-                            <h2 style={{ fontFamily: "Orbitron", fontSize: "1.2rem", color: "#e0f7fa", margin: "0 0 4px" }}>{safeDisplayName}</h2>
+                            <h2 style={{ fontFamily: "Orbitron", fontSize: "1.2rem", color: "#e0f7fa", margin: "0 0 4px" }}>{profile?.displayName || user?.displayName || "Agent"}</h2>
                             <div style={{ color: "#00f5ff", fontFamily: "Share Tech Mono", fontSize: "0.8rem", marginBottom: 8 }}>LVL {level} DEFENDER</div>
                             <div style={{ display: "inline-block", padding: "3px 10px", borderRadius: 4, fontSize: "0.65rem", fontFamily: "Share Tech Mono", background: user.emailVerified ? "rgba(0,255,157,0.1)" : "rgba(255,23,68,0.1)", color: user.emailVerified ? "#00ff9d" : "#ff1744", border: `1px solid ${user.emailVerified ? "rgba(0,255,157,0.2)" : "rgba(255,23,68,0.2)"}`, marginBottom: 15 }}>
                                 STATUS: {user.emailVerified ? "VERIFIED" : "UNVERIFIED"}
@@ -284,7 +196,7 @@ export function ProfilePage({ showToast }) {
 
                         {/* Badges */}
                         <div style={{ ...T.card, padding: 25 }}>
-                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 15 }}>// ACHIEVEMENT BADGES</div>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 15 }}>{"// ACHIEVEMENT BADGES"}</div>
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
                                 {BADGES.map((b, i) => {
                                     const earned = (b.req.type === 'level' && level >= b.req.value) ||
@@ -299,9 +211,10 @@ export function ProfilePage({ showToast }) {
                                 })}
                             </div>
                         </div>
-                        {/* -- SECURITY -- */}
+
+                        {/* NEURAL ACADEMY TRACKING (Moved to right column in logic below if preferred, but keeping here for now and fixing lint) */}
                         <div style={{ ...T.card, padding: 28 }}>
-                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>// NEURAL ACADEMY TRACKING</div>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>{"// NEURAL ACADEMY TRACKING"}</div>
                             <div>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                     <div style={{ fontSize: "0.78rem", color: "#e0f7fa" }}>
@@ -341,44 +254,15 @@ export function ProfilePage({ showToast }) {
                                 )}
                             </div>
                         </div>
-
-                        <div style={{ ...T.card, padding: 28 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-                                <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 0 }}>// RECENT ACTIVITY LOGS</div>
-                                <button
-                                    onClick={downloadActivityExcel}
-                                    disabled={exportingLogs}
-                                    style={{ ...T.btnG, fontSize: "0.68rem", padding: "6px 10px" }}
-                                >
-                                    {exportingLogs ? "Exporting..." : "Download Excel CSV"}
-                                </button>
-                            </div>
-                            <div style={{ maxHeight: 220, overflowY: "auto" }}>
-                                {logsLoading && (
-                                    <div style={{ color: "var(--txt2)", fontSize: "0.75rem" }}>Loading logs...</div>
-                                )}
-                                {!logsLoading && activityLogs.length === 0 && (
-                                    <div style={{ color: "var(--txt2)", fontSize: "0.75rem" }}>No activity logs yet.</div>
-                                )}
-                                {!logsLoading && activityLogs.map((log) => (
-                                    <div key={log.id} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                                        <div style={{ color: "#e0f7fa", fontSize: "0.75rem" }}>{actionLabel(log.action)}</div>
-                                        <div style={{ color: "var(--txt2)", fontSize: "0.65rem", fontFamily: "Share Tech Mono" }}>
-                                            {formatLogTime(log.timestamp)}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
                     </div>
 
-                    {/* -- RIGHT: Edit Form + Class + Security -- */}
+                    {/* -- RIGHT: Edit Form + Class + Security + Logs -- */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
                         {/* EDIT FORM */}
                         <div style={{ ...T.card, padding: 28 }}>
                         <form onSubmit={handleUpdate} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 4 }}>// AGENT CONFIGURATION</div>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 4 }}>{"// AGENT CONFIGURATION"}</div>
                             <div>
                                 <label style={{ color: "var(--txt2)", fontSize: "0.75rem", display: "block", marginBottom: 6 }}>CODENAME</label>
                                 <input style={INP} value={formData.displayName} onChange={e => setFormData({ ...formData, displayName: e.target.value })} required />
@@ -406,7 +290,7 @@ export function ProfilePage({ showToast }) {
 
                         {/* -- CLASS / GROUP -- */}
                         <div style={{ ...T.card, padding: 28 }}>
-                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>// TRAINING CLASS / FRIEND GROUP</div>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>{"// TRAINING CLASS / FRIEND GROUP"}</div>
 
                             {profile?.classCode ? (
                                 <div style={{ background: "rgba(0,245,255,0.04)", border: "1px solid rgba(0,245,255,0.2)", borderRadius: 10, padding: 20 }}>
@@ -444,13 +328,13 @@ export function ProfilePage({ showToast }) {
                                         </div>
                                     </div>
                                     <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(0,0,0,0.3)", borderRadius: 6, fontSize: "0.72rem", color: "var(--txt2)" }}>
-                                        💡 Share this code with friends — they join from their Profile page and appear on your shared leaderboard.
+                                        💡 Share this code with friends &apos; they join from their Profile page and appear on your shared leaderboard.
                                     </div>
                                 </div>
                             ) : (
                                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                     <p style={{ color: "var(--txt2)", fontSize: "0.8rem", margin: 0 }}>
-                                        Create a private group or join a friend's class to compete on a shared leaderboard.
+                                        Create a private group or join a friend&apos;s class to compete on a shared leaderboard.
                                     </p>
                                     <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                                         <button
@@ -501,9 +385,30 @@ export function ProfilePage({ showToast }) {
                             )}
                         </div>
 
+                        {/* RECENT ACTIVITY LOGS (Moved to right column for balance) */}
+                        <div style={{ ...T.card, padding: 28 }}>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>{"// RECENT ACTIVITY LOGS"}</div>
+                            <div style={{ maxHeight: 220, overflowY: "auto" }}>
+                                {logsLoading && (
+                                    <div style={{ color: "var(--txt2)", fontSize: "0.75rem" }}>Loading logs...</div>
+                                )}
+                                {!logsLoading && activityLogs.length === 0 && (
+                                    <div style={{ color: "var(--txt2)", fontSize: "0.75rem" }}>No activity logs yet.</div>
+                                )}
+                                {!logsLoading && activityLogs.map((log) => (
+                                    <div key={log.id} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                        <div style={{ color: "#e0f7fa", fontSize: "0.75rem" }}>{actionLabel(log.action)}</div>
+                                        <div style={{ color: "var(--txt2)", fontSize: "0.65rem", fontFamily: "Share Tech Mono" }}>
+                                            {formatLogTime(log.timestamp)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
 
                         <div style={{ ...T.card, padding: 28 }}>
-                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 16 }}>// SECURITY &amp; AUTHENTICATION</div>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 16 }}>{"// SECURITY & AUTHENTICATION"}</div>
 
                             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                 {user.isAnonymous && (
@@ -526,9 +431,9 @@ export function ProfilePage({ showToast }) {
 
                                 {linkMode === "email" && user.isAnonymous && (
                                     <div style={{ padding: 15, background: "rgba(0,0,0,0.3)", borderRadius: 8, border: "1px solid rgba(0,245,255,0.2)" }}>
-                                        <div style={{ ...T.secLbl, fontSize: "0.6rem", marginBottom: 10 }}>// ENTER CREDENTIALS</div>
-                                        <input style={{ ...INP, marginBottom: 10 }} type="email" autoComplete="email" placeholder="Email" value={linkEmailData.email} onChange={e => setLinkEmailData({ ...linkEmailData, email: e.target.value })} />
-                                        <input style={{ ...INP, marginBottom: 10 }} type="password" autoComplete="new-password" placeholder="Password" value={linkEmailData.password} onChange={e => setLinkEmailData({ ...linkEmailData, password: e.target.value })} />
+                                        <div style={{ ...T.secLbl, fontSize: "0.6rem", marginBottom: 10 }}>{"// ENTER CREDENTIALS"}</div>
+                                        <input style={{ ...INP, marginBottom: 10 }} type="email" placeholder="Email" value={linkEmailData.email} onChange={e => setLinkEmailData({ ...linkEmailData, email: e.target.value })} />
+                                        <input style={{ ...INP, marginBottom: 10 }} type="password" placeholder="Password" value={linkEmailData.password} onChange={e => setLinkEmailData({ ...linkEmailData, password: e.target.value })} />
                                         <div style={{ display: "flex", gap: 10 }}>
                                             <button
                                                 onClick={async () => {
@@ -613,6 +518,3 @@ export function ProfilePage({ showToast }) {
         </div>
     );
 }
-
-
-

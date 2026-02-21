@@ -28,9 +28,6 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
 
   const displayXP = profile?.xp ?? xp ?? 0;
   const displayStreak = profile?.streak ?? streak ?? 0;
-  const compactXP = displayXP >= 1000
-    ? `${(displayXP / 1000).toFixed(displayXP >= 10000 ? 0 : 1).replace(/\.0$/, "")}k`
-    : `${displayXP}`;
 
   return (
     <>
@@ -44,15 +41,13 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
 
         {/* Logo */}
         <a href="#" onClick={(e) => { e.preventDefault(); setPage("home"); setMenuOpen(false); }} style={T.logo}>
-          <svg width={32} height={32} viewBox="0 0 40 40" fill="none">
-            <g transform="translate(2 1.5)">
-              <path d="M18 2L4 8v12c0 8 6.67 14.93 14 16 7.33-1.07 14-7.99 14-16V8L18 2z"
-                fill="rgba(0,245,255,.1)" stroke="#00f5ff" strokeWidth="1.5" />
-              <path d="M12 18l4 4 8-8" stroke="#00f5ff" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round" />
-            </g>
+          <svg width={32} height={32} viewBox="0 0 36 36" fill="none">
+            <path d="M18 2L4 8v12c0 8 6.67 14.93 14 16 7.33-1.07 14-7.99 14-16V8L18 2z"
+              fill="rgba(0,245,255,.1)" stroke="#00f5ff" strokeWidth="1.5" />
+            <path d="M12 18l4 4 8-8" stroke="#00f5ff" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="nav-logo-text" style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ display: "flex", alignItems: "center" }}>
             Phish<span style={{ color: "#00f5ff", textShadow: "0 0 20px #00f5ff" }}>Guard</span>
           </span>
         </a>
@@ -80,11 +75,11 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
         </ul>
 
         {/* Right cluster */}
-        <div className="nav-right-cluster" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {user && (
             <>
               {/* XP badge */}
-              <div className="nav-xp-badge" style={{
+              <div style={{
                 display: "flex", alignItems: "center", gap: 8,
                 padding: "0 14px",
                 height: 32,
@@ -95,9 +90,8 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
                 fontSize: ".72rem", color: "#00f5ff",
                 fontWeight: 700,
                 boxShadow: "0 0 12px rgba(0,245,255,0.1)",
-                whiteSpace: "nowrap",
               }}>
-                XP {compactXP}
+                ⚡ {displayXP.toLocaleString()} XP
               </div>
 
               {/* Streak */}
@@ -194,15 +188,6 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
                   div:hover > .nav-dropdown { display: block !important; }
                   .nav-dd-item:hover { background: rgba(0,245,255,0.08); padding-left: 26px !important; }
                   .nav-dd-item-out:hover { background: rgba(255,71,87,0.08); padding-left: 26px !important; }
-                }
-                @media (max-width: 768px) {
-                  .nav-logo-text { margin-right: 10px; }
-                  .nav-right-cluster { gap: 6px !important; }
-                  .nav-xp-badge {
-                    height: 26px !important;
-                    padding: 0 8px !important;
-                    font-size: 0.64rem !important;
-                  }
                 }
               `}</style>
             </div>

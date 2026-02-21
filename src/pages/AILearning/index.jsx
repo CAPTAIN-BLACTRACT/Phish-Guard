@@ -305,50 +305,25 @@ export function AILearningPage() {
 
         const xpGain = XP_BY_DIFFICULTY[selectedModule.diff] || 120;
         try {
-            await saveTrainingModuleProgress({
-                uid: user.uid,
-                moduleId: selectedModule.id,
-                moduleName: selectedModule.name,
-                completed: true,
-                resourcesTotal: selectedResourceCount,
-                resourceType: "completion",
-                xpEarned: xpGain,
-                notes: "Completed from Neural Academy.",
-            });
-
-            let xpAwarded = true;
-            try {
-                await awardXP(xpGain, {
-                    reason: "TRAINING_MODULE_COMPLETION",
-                    metadata: {
-                        moduleId: selectedModule.id,
-                        moduleName: selectedModule.name,
-                        difficulty: selectedModule.diff,
-                        resourcesTotal: selectedResourceCount,
-                        formula: "difficulty-bucket reward",
-                    },
-                });
-            } catch (xpError) {
-                xpAwarded = false;
-                console.warn("XP award failed after completion save:", xpError);
-            }
-
-            try {
-                await logPlatformAction(user.uid, "TRAINING_COMPLETION_CLICKED", {
+            await Promise.all([
+                saveTrainingModuleProgress({
+                    uid: user.uid,
+                    moduleId: selectedModule.id,
+                    moduleName: selectedModule.name,
+                    completed: true,
+                    resourcesTotal: selectedResourceCount,
+                    resourceType: "completion",
+                    xpEarned: xpGain,
+                    notes: "Completed from Neural Academy.",
+                }),
+                awardXP(xpGain),
+                logPlatformAction(user.uid, "TRAINING_COMPLETION_CLICKED", {
                     moduleId: selectedModule.id,
                     xpGain,
-                });
-            } catch (logError) {
-                console.warn("Telemetry logging failed after completion save:", logError);
-            }
-
+                }),
+            ]);
             await refreshProfile();
-            showToast(
-                xpAwarded
-                    ? `Module completed. +${xpGain} XP awarded.`
-                    : "Module completed. Progress saved (XP sync retry needed).",
-                xpAwarded ? "ok" : "inf"
-            );
+            showToast(`Module completed. +${xpGain} XP awarded.`, "ok");
         } catch (e) {
             showToast(e.message || "Could not save module completion.", "ng");
         }
@@ -751,7 +726,6 @@ export function AILearningPage() {
                     .pg-container { padding: 40px 10px !important; }
                     .resource-grid { grid-template-columns: 1fr !important; }
                     .terms-grid { grid-template-columns: 1fr !important; }
-                    .pg-turtle-wrap { display: none !important; }
                 }
             `}</style>
         </div>

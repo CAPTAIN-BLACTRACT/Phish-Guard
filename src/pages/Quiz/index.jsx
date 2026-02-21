@@ -55,10 +55,7 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
 
   const totalQuestionsInBank = questionBank.length || 1;
   const TOTAL_QUESTIONS = Math.min(QUIZ_LIMIT, totalQuestionsInBank);
-  const questionNumber = Math.min(
-    history.length + (answered ? 0 : 1),
-    TOTAL_QUESTIONS
-  );
+  const questionNumber = Math.min(history.length + 1, TOTAL_QUESTIONS);
   const q = questionBank[qIdx % totalQuestionsInBank] || normalizeQuizQuestion({}, 0);
 
   // ── Timer ──────────────────────────────────────────────────────────────────
@@ -99,28 +96,17 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
     setCurrentDiff(newDiff);
     setConsecutiveCorrect(newStreak);
 
-    // Find candidate indexes for the target difficulty.
-    const poolIndexes = questionBank.reduce((acc, item, index) => {
-      if (item.diff === newDiff) acc.push(index);
-      return acc;
-    }, []);
-
-    if (poolIndexes.length === 0) {
+    // Find questions for new difficulty
+    const pool = questionBank.filter((item) => item.diff === newDiff);
+    if (pool.length === 0) {
       return (prevIdx + 1) % totalQuestionsInBank;
     }
 
-    // Prefer a different question to ensure visible progression.
-    const candidateIndexes = poolIndexes.length > 1
-      ? poolIndexes.filter((idx) => idx !== prevIdx)
-      : poolIndexes;
-
-    const randomIdx = Math.floor(Math.random() * candidateIndexes.length);
-    const selectedIdx = candidateIndexes[randomIdx];
-
-    if (selectedIdx === prevIdx && totalQuestionsInBank > 1) {
-      return (prevIdx + 1) % totalQuestionsInBank;
-    }
-    return selectedIdx;
+    // Return a random one from that pool (excluding same if possible)
+    const randomIdx = Math.floor(Math.random() * pool.length);
+    const selectedQ = pool[randomIdx];
+    const selectedIdx = questionBank.findIndex((item) => item.id === selectedQ.id);
+    return selectedIdx >= 0 ? selectedIdx : (prevIdx + 1) % totalQuestionsInBank;
   };
 
   const { awardXP, updateStreak } = useUser();
@@ -187,29 +173,7 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
       ? (q.diff === "easy" ? 50 : q.diff === "medium" ? 100 : 150)
       : 10;
 
-    // Update local quiz progression immediately so UI never blocks on backend writes.
-    setHistory((h) => [...h, { idx: qIdx, correct }]);
-    showToast(
-      correct ? `🎯 Correct! +${xpGain} XP earned!` : "❌ Not quite. Read the explanation below.",
-      correct ? "ok" : "ng"
-    );
-
-    try {
-      await awardXP(xpGain, {
-        reason: "QUIZ_ANSWER",
-        metadata: {
-          questionId: q.id || qIdx,
-          topic: q.topic || "general",
-          difficulty: q.diff,
-          correct,
-          score: correct ? 1 : 0,
-          total: 1,
-          formula: correct ? "difficulty-based reward" : "incorrect-answer baseline",
-        },
-      });
-    } catch (e) {
-      console.warn("XP sync failed:", e);
-    }
+    await awardXP(xpGain);
 
     if (user) {
       try {
@@ -241,6 +205,12 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
         }
       }
     }
+
+    setHistory((h) => [...h, { idx: qIdx, correct }]);
+    showToast(
+      correct ? `🎯 Correct! +${xpGain} XP earned!` : "❌ Not quite. Read the explanation below.",
+      correct ? "ok" : "ng"
+    );
   };
 
   // ── Next question ──────────────────────────────────────────────────────────
@@ -250,7 +220,7 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
       setQIdx(0); setHistory([]); setAnswered(false); setSelected(null);
       setCurrentDiff("easy"); setConsecutiveCorrect(0);
     } else {
-      const nextQIdx = getNextQuestion(qIdx, selected === q.correct);
+      const nextQIdx = getNextQuestion(qIdx, history[history.length - 1].correct);
       setQIdx(nextQIdx);
       setAnswered(false);
       setSelected(null);

@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { T } from '../../styles';
 import { PageHeader } from '../../components';
-import { QUESTIONS, SIM_STAGES, MODULES, GALLERY_DATA, LB_DATA } from '../../constants';
-import { useAuth } from "../../context";
+import { QUESTIONS, SIM_STAGES, MODULES } from '../../constants';
 import { db, storage } from '../../firebase/config';
 import {
     collection, addDoc, doc, updateDoc, serverTimestamp
@@ -14,7 +13,6 @@ import {
     addAdminQuizQuestion, getAdminQuizQuestions, deleteAdminQuizQuestion,
     addAdminSimScenario, getAdminSimScenarios, deleteAdminSimScenario,
     syncQuizQuestionsToBackend, syncSimScenariosToBackend,
-    syncGalleryEntriesToBackend, syncLeaderboardSeedToBackend,
 } from '../../firebase/db';
 
 const INP = {
@@ -40,7 +38,6 @@ const emptySim = {
 /* ─── COMPONENT ──────────────────────────────────────────────────────────── */
 export function AdminPage({ showToast }) {
     const navigate = useNavigate();
-    const { user } = useAuth();
     const [pass, setPass] = useState("");
     const [isAuth, setIsAuth] = useState(false);
     const [tab, setTab] = useState("analytics");
@@ -67,8 +64,6 @@ export function AdminPage({ showToast }) {
     const staticQuizCount = QUESTIONS.length;
     const staticSimCount = SIM_STAGES.length;
     const staticModuleCount = MODULES.length;
-    const staticGalleryCount = GALLERY_DATA.length;
-    const staticLeaderboardCount = LB_DATA.length;
 
     const openRoute = (path) => {
         navigate(path);
@@ -219,63 +214,21 @@ export function AdminPage({ showToast }) {
         }
     };
 
-    const handleSyncGalleryContent = async () => {
-        if (!user?.uid) {
-            showToast("Sign in with Firebase before syncing gallery.", "ng");
-            return;
-        }
-        setLoading(true);
-        try {
-            const result = await syncGalleryEntriesToBackend(GALLERY_DATA, {
-                uid: user.uid,
-                displayName: user.displayName || "Admin Seeder",
-            });
-            await loadAnalytics();
-            showToast(`Synced ${result.synced} gallery entries to backend.`, "ok");
-        } catch (err) {
-            showToast(err.message || "Failed to sync gallery content.", "ng");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSyncLeaderboardSeed = async () => {
-        setLoading(true);
-        try {
-            const result = await syncLeaderboardSeedToBackend(LB_DATA);
-            showToast(`Synced ${result.synced} leaderboard seed entries.`, "ok");
-        } catch (err) {
-            showToast(err.message || "Failed to sync leaderboard seed.", "ng");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     /* ── Gallery Upload ── */
     const handleGalleryUpload = async (e) => {
         e.preventDefault();
         if (!galleryForm.file) return showToast("Please select an image", "inf");
-        if (!user?.uid) return showToast("Sign in with Firebase before uploading gallery items.", "ng");
         setLoading(true);
         try {
             const fileRef = ref(storage, `gallery/${Date.now()}_${galleryForm.file.name}`);
             await uploadBytes(fileRef, galleryForm.file);
             const url = await getDownloadURL(fileRef);
             await addDoc(collection(db, "gallery"), {
-                uid: user.uid,
-                displayName: user.displayName || "Admin",
                 title: galleryForm.title, description: galleryForm.description,
-                type: galleryForm.type,
-                imageURL: url,
-                imageUrl: url,
-                tags: [galleryForm.type],
-                submittedAt: serverTimestamp(),
-                timestamp: serverTimestamp(),
-                approved: true
+                type: galleryForm.type, imageUrl: url, timestamp: serverTimestamp(), approved: true
             });
             showToast("Gallery item uploaded!", "ok");
             setGalleryForm({ title: "", description: "", type: "phish", file: null });
-            await loadAnalytics();
         } catch (err) { showToast(err.message, "ng"); }
         finally { setLoading(false); }
     };
@@ -288,7 +241,7 @@ export function AdminPage({ showToast }) {
                 <PageHeader label="RESTRICTED AREA" title="Admin Command Center" />
                 <p style={{ color: "var(--txt2)", fontSize: "0.8rem", marginBottom: 24 }}>Enter your administrative access key to continue.</p>
                 <input
-                    type="password" autoComplete="current-password" placeholder="ENTER ACCESS KEY" value={pass}
+                    type="password" placeholder="ENTER ACCESS KEY" value={pass}
                     onChange={e => setPass(e.target.value)} autoFocus
                     style={{ ...INP, textAlign: "center", letterSpacing: "0.3em", marginBottom: 20, padding: 14 }}
                 />
@@ -327,8 +280,6 @@ export function AdminPage({ showToast }) {
                     <button onClick={() => openRoute("/neural-academy")} style={{ ...T.btnG, fontSize: "0.75rem" }}>Open Academy</button>
                     <button onClick={() => openRoute("/quiz")} style={{ ...T.btnG, fontSize: "0.75rem" }}>Open Quiz</button>
                     <button onClick={() => openRoute("/simulator")} style={{ ...T.btnG, fontSize: "0.75rem" }}>Open Simulator</button>
-                    <button onClick={() => openRoute("/gallery")} style={{ ...T.btnG, fontSize: "0.75rem" }}>Open Gallery</button>
-                    <button onClick={() => openRoute("/leaderboard")} style={{ ...T.btnG, fontSize: "0.75rem" }}>Open Leaderboard</button>
                 </div>
 
                 {/* ─── ANALYTICS TAB ───────────────────────────────────────────────── */}
@@ -356,7 +307,7 @@ export function AdminPage({ showToast }) {
                                 </div>
                             )}
                         </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                             <div style={CARD}>
                                 <div style={{ color: "#00f5ff", fontFamily: "Share Tech Mono", fontSize: "0.75rem", marginBottom: 12 }}>// QUIZ QUESTION POOL</div>
                                 <div style={{ color: "#e0f7fa", fontSize: "1.4rem", fontWeight: 700 }}>{quizList.length} questions in Firestore</div>
@@ -371,22 +322,6 @@ export function AdminPage({ showToast }) {
                                 <div style={{ color: "var(--txt2)", fontSize: "0.75rem", marginTop: 4 }}>Static scenarios in code: {staticSimCount}</div>
                                 <button onClick={handleSyncSimulatorContent} disabled={loading} style={{ ...T.btnG, marginTop: 10, fontSize: "0.72rem" }}>
                                     Sync Static Simulator to Backend
-                                </button>
-                            </div>
-                            <div style={CARD}>
-                                <div style={{ color: "#ff6d00", fontFamily: "Share Tech Mono", fontSize: "0.75rem", marginBottom: 12 }}>// GALLERY SEED DATA</div>
-                                <div style={{ color: "#e0f7fa", fontSize: "1.4rem", fontWeight: 700 }}>{staticGalleryCount} seed entries</div>
-                                <div style={{ color: "var(--txt2)", fontSize: "0.75rem", marginTop: 4 }}>Pushes static gallery examples to Firestore</div>
-                                <button onClick={handleSyncGalleryContent} disabled={loading} style={{ ...T.btnG, marginTop: 10, fontSize: "0.72rem" }}>
-                                    Sync Static Gallery to Backend
-                                </button>
-                            </div>
-                            <div style={CARD}>
-                                <div style={{ color: "#ffd600", fontFamily: "Share Tech Mono", fontSize: "0.75rem", marginBottom: 12 }}>// LEADERBOARD SEED</div>
-                                <div style={{ color: "#e0f7fa", fontSize: "1.4rem", fontWeight: 700 }}>{staticLeaderboardCount} seed defenders</div>
-                                <div style={{ color: "var(--txt2)", fontSize: "0.75rem", marginTop: 4 }}>Used when no user leaderboard data exists</div>
-                                <button onClick={handleSyncLeaderboardSeed} disabled={loading} style={{ ...T.btnG, marginTop: 10, fontSize: "0.72rem" }}>
-                                    Sync Leaderboard Seed to Backend
                                 </button>
                             </div>
                         </div>
