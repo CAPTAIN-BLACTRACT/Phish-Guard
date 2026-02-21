@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ──────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ─── User Profiles ────────────────────────────────────────────
+    match /users/{userId} {
+      // Leaderboard requires public read of XP/DisplayName
+      allow read: if true;
+      // Only the agent can modify their own dossier
+      allow write: if isOwner(userId);
+    }
+
+    // ─── Knowledge Hub (Quizzes) ──────────────────────────────────
+    match /quizzes/{quizId} {
+      allow read: if true;
+      // Admin-only write in production, restricted to authed for hackathon
+      allow write: if isSignedIn();
+    }
+
+    // ─── Intel Repository (Gallery) ───────────────────────────────
+    match /gallery/{itemId} {
+      allow read: if true;
+      // Any verified agent can contribute threat intelligence
+      allow write: if isSignedIn();
+    }
+
+    // ─── Feedback & Intel Reports ─────────────────────────────────
+    match /feedback/{docId} {
+      allow read: if false; // Private intel
+      allow write: if isSignedIn();
+    }
+    
+    // ─── Simulation Logs (Analytics) ──────────────────────────────
+    match /logs/{logId} {
+      allow read: if false;
+      allow write: if isSignedIn();
+    }
+  }
+}

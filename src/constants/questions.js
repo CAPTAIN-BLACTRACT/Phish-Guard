@@ -127,4 +127,68 @@ export const QUESTIONS = [
     explain:
       "OAuth phishing grants attackers persistent access to your account. Legitimate backup apps only need read access to Drive — not email read/send. Always review OAuth permissions carefully.",
   },
+  {
+    diff: "easy",
+    topic: "Social Engineering",
+    scenario: "A 'colleague' DMs you on Slack:",
+    img: '💬 SLACK from: "Devin (Engineering)"\n"Hey, sorry to bother you! I accidentally sent my 2FA code to your phone. Can you just pasted it here for me?"',
+    q: "How should you respond to this request?",
+    opts: [
+      "Copy and paste the code immediately",
+      "Ignore it and report the account to IT",
+      "Ask which code it was first",
+      "Paste the code but change one digit",
+    ],
+    correct: 1,
+    explain:
+      "This is a 2FA interception attack. Legitimate 2FA codes are never sent to other people's phones. The 'colleague' is likely an attacker who has your password and is trying to bypass your security.",
+  },
+  {
+    diff: "medium",
+    topic: "Malware Distribution",
+    scenario: "You find a USB drive in the parking lot:",
+    img: '💾 LABEL: "Salaries_2026_Confidential"\n[A physical USB stick lying on the ground]',
+    q: "What is the safest action?",
+    opts: [
+      "Plug it in to see who it belongs to",
+      "Turn it over to security/IT without plugging it in",
+      "Wipe it and use it as a personal drive",
+      "Plug it into a non-work computer first",
+    ],
+    correct: 1,
+    explain:
+      "USB dropping is a common physical social engineering tactic. The drive likely contains auto-run malware or a 'USB Rubber Ducky' that simulates a keyboard to steal data. Never plug in unknown drives.",
+  },
+  {
+    diff: "hard",
+    topic: "Search Engine Phishing",
+    scenario: "You search for 'PhishGuard Login' on Google:",
+    img: "🔍 GOOGLE SEARCH RESULTS:\nAd: PhishGuard Official Login - Secure Access\nURL: https://phish-guaard.io/auth\n...\nResult: PhishGuard | Professional Defense\nURL: https://phishguard.io",
+    q: "Which link is the legitimate one?",
+    opts: [
+      "The first result (sponsored ad)",
+      "The second result (organic link)",
+      "Both are safe",
+      "Neither is safe",
+    ],
+    correct: 1,
+    explain:
+      "Attackers often pay for ads (SEO poisoning) to place fake sites at the top of search results. Note the typo in the ad URL: 'phish-guaard' with two 'a's. Always check the organic results and the URL carefully.",
+  },
+  {
+    diff: "hard",
+    topic: "QR Code Phishing (Quishing)",
+    scenario: "You see a sticker on a parking meter:",
+    img: "🅿️ STICKER: 'Scan to pay for parking - 50% discount today!'\n[QR Code]",
+    q: "What is the risk of scanning this QR code?",
+    opts: [
+      "It might give you a virus through the camera",
+      "It could redirect you to a fake payment site that steals your credit card info",
+      "QR codes cannot be used for phishing",
+      "There is no risk if you use a secure scanner",
+    ],
+    correct: 1,
+    explain:
+      "Quishing involves replacing legitimate QR codes with malicious ones. The code can lead to a site that looks like a real payment portal but harvests your financial details. Only use official apps or verified payment methods.",
+  },
 ];

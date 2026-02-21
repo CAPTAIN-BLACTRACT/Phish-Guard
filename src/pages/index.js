@@ -1,6 +1,11 @@
-export { HomePage }        from "./HomePage";
-export { QuizPage }        from "./QuizPage";
-export { SimulatorPage }   from "./SimulatorPage";
-export { LeaderboardPage } from "./LeaderboardPage";
-export { GalleryPage }     from "./GalleryPage";
-export { ProgressPage }    from "./ProgressPage";
+export { default as HomePage } from "./Home";
+export { QuizPage } from "./Quiz";
+export { SimulatorPage } from "./Simulator";
+export { LeaderboardPage } from "./Leaderboard";
+export { GalleryPage } from "./Gallery";
+export { ProgressPage } from "./Progress";
+export { InformationPage } from "./Information";
+export { AdminPage } from "./Admin";
+export { ProfilePage } from "./Profile";
+export { AILearningPage } from "./AILearning";
+export { default as LoginPage } from "./Login";

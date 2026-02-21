@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Helpers ──────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isFileSizeOk(maxMB) {
+      return request.resource.size <= maxMB * 1024 * 1024;
+    }
+
+    // ─── Avatars  /avatars/{uid}/{fileName} ───────────────────────
+    match /avatars/{uid}/{fileName} {
+      // Public read for leaderboards/profiles
+      allow read: if true;
+
+      // Only the agent can upload/replace their own visual ID (max 2MB)
+      allow write: if isOwner(uid) && isImage() && isFileSizeOk(2);
+      allow delete: if isOwner(uid);
+    }
+
+    // ─── Community Gallery /gallery/{uid}/{fileName} ────────────
+    match /gallery/{uid}/{fileName} {
+      allow read: if true;
+      // Verified agents can upload threat screenshots (max 5MB)
+      allow write: if isSignedIn() && isImage() && isFileSizeOk(5);
+      allow delete: if isOwner(uid);
+    }
+
+    // ─── Default Deny ─────────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

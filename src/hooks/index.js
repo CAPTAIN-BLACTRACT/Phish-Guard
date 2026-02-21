@@ -1,3 +1,3 @@
-export { useXPSystem }  from "./useXPSystem";
-export { useToast }     from "./useToast";
-export { useTurtleTip } from "./useTurtleTip";
+export { useXPSystem } from "./useXPSystem";
+export { useToast } from "./useToast";
+export { useFinnTip } from "./useFinnTip";
