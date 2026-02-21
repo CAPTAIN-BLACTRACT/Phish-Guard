@@ -8,7 +8,7 @@
  *   gallery/       – user-submitted entries (reported phishing examples)
  */
 import {
-    doc, getDoc, setDoc, updateDoc, addDoc, getDocs,
+    doc, getDoc, setDoc, updateDoc, addDoc, getDocs, deleteDoc, writeBatch,
     collection, query, orderBy, limit, where,
     serverTimestamp, increment, arrayUnion,
 } from "firebase/firestore";
@@ -226,4 +226,12 @@ export async function logPlatformAction(uid, action, metadata = {}) {
         metadata,
         timestamp: serverTimestamp(),
     });
+}
+
+/** Purge all user data from Firestore. */
+export async function deleteUserData(uid) {
+    const batch = writeBatch(db);
+    batch.delete(doc(db, "users", uid));
+    batch.delete(doc(db, "leaderboard", uid));
+    await batch.commit();
 }

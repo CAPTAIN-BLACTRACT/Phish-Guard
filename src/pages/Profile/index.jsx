@@ -9,7 +9,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { BADGES } from '../../constants';
 
 export function ProfilePage({ showToast }) {
-    const { user, resetPassword, verifyEmail, linkGoogle, linkEmail } = useAuth();
+    const { user, resetPassword, verifyEmail, linkGoogle, linkEmail, deleteAccount } = useAuth();
     const { profile, loading: profileLoading } = useUser();
     const [loading, setLoading] = useState(false);
     const [linkMode, setLinkMode] = useState(null); // null | "email"
@@ -387,6 +387,29 @@ export function ProfilePage({ showToast }) {
                                         </div>
                                     </div>
                                 )}
+
+                                <div style={{ marginTop: 20, borderTop: "1px solid rgba(255,71,87,0.1)", paddingTop: 20 }}>
+                                    <button
+                                        onClick={async () => {
+                                            if (window.confirm("CRITICAL: This will permanently purge your dossier and all training progress from the grid. This action cannot be undone. Proceed?")) {
+                                                try {
+                                                    setLoading(true);
+                                                    await deleteAccount();
+                                                    showToast("DOSSIER PURGED. SESSION TERMINATED.", "ok");
+                                                } catch (e) {
+                                                    if (e.code === 'auth/requires-recent-login') {
+                                                        showToast("Deletion requires recent authentication. Please sign out and in again.", "ng");
+                                                    } else {
+                                                        showToast(e.message, "ng");
+                                                    }
+                                                } finally { setLoading(false); }
+                                            }
+                                        }}
+                                        style={{ ...T.btnG, width: "100%", color: "#ff4757", borderColor: "rgba(255,71,87,0.3)", background: "rgba(255,71,87,0.05)", fontSize: "0.8rem" }}
+                                    >
+                                        ⚠️ Terminate Session & Wipe Data
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

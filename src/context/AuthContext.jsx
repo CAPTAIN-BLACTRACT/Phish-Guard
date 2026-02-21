@@ -18,6 +18,7 @@ import {
     verifyEmail,
     linkGoogle,
     linkEmail,
+    deleteAccount,
 } from "../firebase/auth";
 
 const AuthContext = createContext(null);
@@ -46,6 +47,7 @@ export function AuthProvider({ children }) {
         verifyEmail,
         linkGoogle,
         linkEmail,
+        deleteAccount,
     };
 
     // While Firebase resolves existing sessions don't flash the UI

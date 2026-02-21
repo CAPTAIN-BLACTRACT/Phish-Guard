@@ -17,10 +17,12 @@ import {
     linkWithPopup,
     linkWithCredential,
     EmailAuthProvider,
+    deleteUser,
+    reauthenticateWithCredential,
 } from "firebase/auth";
 
 import { auth } from "./config";
-import { createOrUpdateUser } from "./db";
+import { createOrUpdateUser, deleteUserData } from "./db";
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
@@ -87,6 +89,19 @@ export async function signOutUser() {
 /** Calls `callback` whenever the signed-in user changes. Returns unsubscribe fn. */
 export function onAuthChange(callback) {
     return onAuthStateChanged(auth, callback);
+}
+
+/** Deletes the authenticated user and all associated Firestore data. */
+export async function deleteAccount() {
+    if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
+    try {
+        await deleteUserData(uid);
+        await deleteUser(auth.currentUser);
+    } catch (e) {
+        console.error("Deletion failed:", e);
+        throw e;
+    }
 }
 
 export { auth };
