@@ -172,6 +172,12 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
     const xpGain = correct
       ? (q.diff === "easy" ? 50 : q.diff === "medium" ? 100 : 150)
       : 10;
+    setHistory((h) => [...h, { idx: qIdx, correct }]);
+
+    showToast(
+      correct ? `🎯 Correct! +${xpGain} XP earned!` : "❌ Not quite. Read the explanation below.",
+      correct ? "ok" : "ng"
+    );
 
     try {
       await awardXP(xpGain);
@@ -207,12 +213,6 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
         }
       }
     }
-
-    setHistory((h) => [...h, { idx: qIdx, correct }]);
-    showToast(
-      correct ? `🎯 Correct! +${xpGain} XP earned!` : "❌ Not quite. Read the explanation below.",
-      correct ? "ok" : "ng"
-    );
   };
 
   // ── Next question ──────────────────────────────────────────────────────────
@@ -222,7 +222,11 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
       setQIdx(0); setHistory([]); setAnswered(false); setSelected(null);
       setCurrentDiff("easy"); setConsecutiveCorrect(0);
     } else {
-      const nextQIdx = getNextQuestion(qIdx, history[history.length - 1].correct);
+      const lastAttempt = history[history.length - 1];
+      const wasCorrect = typeof lastAttempt?.correct === "boolean"
+        ? lastAttempt.correct
+        : selected === q.correct;
+      const nextQIdx = getNextQuestion(qIdx, Boolean(wasCorrect));
       setQIdx(nextQIdx);
       setAnswered(false);
       setSelected(null);

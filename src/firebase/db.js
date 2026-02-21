@@ -19,14 +19,37 @@ function isPermissionDeniedError(error) {
     return error?.code === "permission-denied" || error?.code === "firestore/permission-denied";
 }
 
+const devWriteWarnings = new Set();
+
+function warnSkippedWriteOnce(label, error) {
+    if (!import.meta.env.DEV) return;
+
+    const code = error?.code || error?.message || "unknown";
+    const key = `${label}:${code}`;
+    if (devWriteWarnings.has(key)) return;
+    devWriteWarnings.add(key);
+
+    const hint = isPermissionDeniedError(error)
+        ? " (deploy Firestore rules: firebase deploy --only firestore:rules)"
+        : "";
+    console.warn(`[db] skipped ${label}: ${code}${hint}`);
+}
+
+function withPermissionHint(error, actionLabel) {
+    if (!isPermissionDeniedError(error)) return error;
+    const friendly = new Error(
+        `Permission denied while trying to ${actionLabel}. Deploy Firestore rules and try again.`
+    );
+    friendly.code = error?.code || "permission-denied";
+    return friendly;
+}
+
 async function safeFirestoreWrite(op, label = "firestore write") {
     try {
         await op();
         return true;
     } catch (error) {
-        if (import.meta.env.DEV) {
-            console.warn(`[db] skipped ${label}:`, error?.code || error?.message || error);
-        }
+        warnSkippedWriteOnce(label, error);
         return false;
     }
 }
@@ -600,33 +623,37 @@ async function resolveClassDocByCode(rawCode) {
 export async function createClass(uid, displayName) {
     if (!uid) throw new Error("createClass requires uid.");
 
-    let attempts = 0;
-    while (attempts < 25) {
-        const code = generateClassCode();
-        const classRef = doc(db, "classes", code);
-        const snap = await getDoc(classRef);
-        if (snap.exists()) {
-            attempts += 1;
-            continue;
+    try {
+        let attempts = 0;
+        while (attempts < 25) {
+            const code = generateClassCode();
+            const classRef = doc(db, "classes", code);
+            const snap = await getDoc(classRef);
+            if (snap.exists()) {
+                attempts += 1;
+                continue;
+            }
+
+            await setDoc(classRef, {
+                code,
+                createdBy: uid,
+                createdByName: displayName || "Unknown",
+                members: [uid],
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+
+            // Use setDoc merge so class creation still works even if users/{uid} was missing.
+            await setDoc(doc(db, "users", uid), {
+                uid,
+                classCode: code,
+                lastActive: serverTimestamp(),
+            }, { merge: true });
+
+            return code;
         }
-
-        await setDoc(classRef, {
-            code,
-            createdBy: uid,
-            createdByName: displayName || "Unknown",
-            members: [uid],
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-
-        // Use setDoc merge so class creation still works even if users/{uid} was missing.
-        await setDoc(doc(db, "users", uid), {
-            uid,
-            classCode: code,
-            lastActive: serverTimestamp(),
-        }, { merge: true });
-
-        return code;
+    } catch (error) {
+        throw withPermissionHint(error, "create a class");
     }
 
     throw new Error("Could not generate a unique class code. Please try again.");
@@ -638,20 +665,24 @@ export async function joinClass(uid, code) {
     const upperCode = String(code || "").trim().toUpperCase();
     if (!upperCode) throw new Error("Enter a valid class code.");
 
-    const found = await resolveClassDocByCode(upperCode);
-    if (!found) throw new Error("Class code not found. Check the code and try again.");
+    try {
+        const found = await resolveClassDocByCode(upperCode);
+        if (!found) throw new Error("Class code not found. Check the code and try again.");
 
-    await updateDoc(found.ref, {
-        members: arrayUnion(uid),
-        updatedAt: serverTimestamp(),
-    });
-    await setDoc(doc(db, "users", uid), {
-        uid,
-        classCode: upperCode,
-        lastActive: serverTimestamp(),
-    }, { merge: true });
+        await updateDoc(found.ref, {
+            members: arrayUnion(uid),
+            updatedAt: serverTimestamp(),
+        });
+        await setDoc(doc(db, "users", uid), {
+            uid,
+            classCode: upperCode,
+            lastActive: serverTimestamp(),
+        }, { merge: true });
 
-    return { ...found.data, code: upperCode };
+        return { ...found.data, code: upperCode };
+    } catch (error) {
+        throw withPermissionHint(error, "join a class");
+    }
 }
 
 /** Leave a class and clear user's classCode. */
@@ -659,19 +690,23 @@ export async function leaveClass(uid, code) {
     if (!uid) throw new Error("leaveClass requires uid.");
     const upperCode = String(code || "").trim().toUpperCase();
 
-    const found = await resolveClassDocByCode(upperCode);
-    if (found) {
-        const members = (found.data.members || []).filter((m) => m !== uid);
-        await updateDoc(found.ref, {
-            members,
-            updatedAt: serverTimestamp(),
-        });
+    try {
+        const found = await resolveClassDocByCode(upperCode);
+        if (found) {
+            const members = (found.data.members || []).filter((m) => m !== uid);
+            await updateDoc(found.ref, {
+                members,
+                updatedAt: serverTimestamp(),
+            });
+        }
+        await setDoc(doc(db, "users", uid), {
+            uid,
+            classCode: null,
+            lastActive: serverTimestamp(),
+        }, { merge: true });
+    } catch (error) {
+        throw withPermissionHint(error, "leave a class");
     }
-    await setDoc(doc(db, "users", uid), {
-        uid,
-        classCode: null,
-        lastActive: serverTimestamp(),
-    }, { merge: true });
 }
 
 /** Get leaderboard filtered to class members only. */
