@@ -3,15 +3,19 @@ import { T } from "../styles";
 import { useAuth } from "../context/AuthContext";
 import { useUser } from "../context/UserContext";
 
-const LINKS = [
-  { id: "home", label: "Home", icon: "🏠" },
+const MAIN_LINKS = [
+  { id: "home", label: "Dashboard", icon: "🏠" },
   { id: "simulator", label: "Simulator", icon: "🎯" },
   { id: "quiz", label: "Quiz", icon: "🧠" },
+  { id: "ai-learning", label: "Neural Academy", icon: "🤖" },
+];
+
+const EXTRA_LINKS = [
   { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
   { id: "gallery", label: "Gallery", icon: "🖼️" },
-  { id: "ai-learning", label: "Neural Academy", icon: "🤖" },
   { id: "progress", label: "Progress", icon: "📈" },
 ];
+
 
 /**
  * Navbar
@@ -45,18 +49,20 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
             <path d="M12 18l4 4 8-8" stroke="#00f5ff" strokeWidth="2"
               strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Phish<span style={{ color: "#00f5ff", textShadow: "0 0 20px #00f5ff" }}>Guard</span>
+          <span style={{ display: "flex", alignItems: "center" }}>
+            Phish<span style={{ color: "#00f5ff", textShadow: "0 0 20px #00f5ff" }}>Guard</span>
+          </span>
         </a>
 
         {/* Desktop nav links */}
         <ul style={{
           display: "flex", listStyle: "none", gap: 24, margin: 0,
-        }} className="nav-links">
-          {LINKS.map(({ id, label }) => (
+        }} className="nav-links hide-mobile">
+          {MAIN_LINKS.map(({ id, label }) => (
             <li key={id}>
               <a href="#" onClick={(e) => { e.preventDefault(); setPage(id); }}
                 style={{
-                  color: page === id ? "#00f5ff" : "#546e7a",
+                  color: page === id ? "#00f5ff" : "var(--txt2)",
                   textDecoration: "none", fontSize: ".72rem",
                   fontWeight: 600, letterSpacing: "0.1em",
                   textTransform: "uppercase",
@@ -72,35 +78,40 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
 
         {/* Right cluster */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* XP badge */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "5px 14px",
-            background: "rgba(0,245,255,.06)",
-            border: "1px solid rgba(0,245,255,.25)",
-            borderRadius: 4,
-            fontFamily: "Share Tech Mono, monospace",
-            fontSize: ".72rem", color: "#00f5ff",
-            boxShadow: "0 0 12px rgba(0,245,255,0.1)",
-          }}>
-            ⚡ {displayXP.toLocaleString()} XP
-          </div>
+          {user && (
+            <>
+              {/* XP badge */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "0 14px",
+                height: 32,
+                background: "rgba(0,245,255,.06)",
+                border: "1px solid rgba(0,245,255,.25)",
+                borderRadius: 4,
+                fontFamily: "Share Tech Mono, monospace",
+                fontSize: ".72rem", color: "#00f5ff",
+                fontWeight: 700,
+                boxShadow: "0 0 12px rgba(0,245,255,0.1)",
+              }}>
+                ⚡ {displayXP.toLocaleString()} XP
+              </div>
 
-          {/* Streak */}
-          <div style={{ fontFamily: "Share Tech Mono, monospace", fontSize: ".72rem", color: "#ff6d00" }}
-            className="hide-mobile">
-            🔥 {displayStreak} day streak
-          </div>
+              {/* Streak */}
+              <div style={{ fontFamily: "Share Tech Mono, monospace", fontSize: ".72rem", color: "#ff6d00" }}
+                className="hide-mobile">
+                🔥 {displayStreak} day streak
+              </div>
+            </>
+          )}
 
           {/* Auth button */}
           {user ? (
             <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8 }}>
               <div
                 style={{ position: "relative", cursor: "pointer" }}
-                onMouseEnter={() => setMenuOpen(true)}
               >
                 <img
-                  src={profile?.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`}
+                  src={profile?.photoURL || user?.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user?.uid || 'guest'}&backgroundColor=00f5ff`}
                   alt="avatar"
                   style={{
                     width: 32, height: 32, borderRadius: "50%",
@@ -122,6 +133,15 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
                   >
                     📂 AGENT PROFILE
                   </div>
+                  {EXTRA_LINKS.map(({ id, label }) => (
+                    <div
+                      key={id}
+                      onClick={() => setPage(id)}
+                      style={{ padding: "8px 16px", color: "#e0f7fa", fontSize: "0.75rem", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                    >
+                      {label.toUpperCase()}
+                    </div>
+                  ))}
                   <div
                     onClick={() => signOutUser()}
                     style={{ padding: "8px 16px", color: "#ff4757", fontSize: "0.75rem", cursor: "pointer" }}
@@ -147,7 +167,7 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
             </div>
           ) : (
             <button style={{
-              ...T.btnP, padding: "6px 14px", fontSize: ".72rem",
+              ...T.btnP, padding: "0 14px", fontSize: ".72rem", height: 32,
             }} onClick={onLoginClick}>
               Sign In
             </button>
@@ -179,7 +199,7 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
           padding: "1rem",
           display: "flex", flexDirection: "column", gap: 8,
         }}>
-          {LINKS.map(({ id, label, icon }) => (
+          {[{ id: "profile", label: "Profile", icon: "👤" }, ...MAIN_LINKS, ...EXTRA_LINKS].map(({ id, label, icon }) => (
             <a key={id} href="#"
               onClick={(e) => { e.preventDefault(); setPage(id); setMenuOpen(false); }}
               style={{

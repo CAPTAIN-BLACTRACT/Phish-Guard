@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { T } from "../styles";
+import { useAuth } from '../../context/AuthContext';
+import { T } from '../../styles';
 
 export default function LoginPage({ onClose }) {
     const { signInWithGoogle, signInEmail, registerEmail, resetPassword, signInGuest } = useAuth();
@@ -62,7 +62,7 @@ export default function LoginPage({ onClose }) {
                 <div style={{ textAlign: "center", marginBottom: 24 }}>
                     <div style={{ fontSize: "2.2rem", marginBottom: 8 }}>🛡️</div>
                     <h2 style={{ margin: 0, fontFamily: "Orbitron, sans-serif", color: "#00f5ff", fontSize: "1.5rem" }}>Authentication</h2>
-                    <p style={{ color: "#546e7a", marginTop: 4, fontSize: "0.85rem", fontFamily: "Share Tech Mono" }}>PHISH-GUARD TERMINAL v1.0</p>
+                    <p style={{ color: "var(--txt2)", marginTop: 4, fontSize: "0.85rem", fontFamily: "Share Tech Mono" }}>PHISH-GUARD TERMINAL v1.0</p>
                 </div>
 
                 {error && (
@@ -75,8 +75,8 @@ export default function LoginPage({ onClose }) {
 
                 {mode === "login" && (
                     <>
-                        <button onClick={handleGoogle} disabled={busy} style={{ ...T.btnP, width: "100%", marginBottom: 12, background: "#fff", color: "#000", fontWeight: 700 }}>
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/layout/google.svg" width="16" style={{ marginRight: 8 }} alt="google" />
+                        <button onClick={handleGoogle} disabled={busy} style={{ ...T.btnP, width: "100%", marginBottom: 12, background: "#fff", color: "#000", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18" style={{ marginRight: 10 }} alt="google" />
                             Sign in with Google
                         </button>
                         <button onClick={handleGuest} disabled={busy} style={{ ...T.btnG, width: "100%", marginBottom: 16 }}>
@@ -90,10 +90,10 @@ export default function LoginPage({ onClose }) {
                         </form>
                         <div style={{ marginTop: 20, padding: 12, borderRadius: 8, background: "rgba(0,245,255,0.05)", border: "1px dashed rgba(0,245,255,0.3)" }}>
                             <div style={{ fontSize: "0.7rem", color: "#00f5ff", fontFamily: "Share Tech Mono", marginBottom: 4 }}>// DEMO CONSOLE</div>
-                            <div style={{ fontSize: "0.75rem", color: "#90a4ae" }}>Email: <span style={{ color: "#fff" }}>demo@phishguard.ai</span></div>
+                            <div style={{ fontSize: "0.75rem", color: "#90a4ae" }}>Email: <span style={{ color: "#fff" }}>sumitboy2005@gmail.com</span></div>
                             <div style={{ fontSize: "0.75rem", color: "#90a4ae" }}>Pass: <span style={{ color: "#fff" }}>demo123</span></div>
                         </div>
-                        <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.85rem", color: "#546e7a" }}>
+                        <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.85rem", color: "var(--txt2)" }}>
                             New recruit? <span onClick={() => setMode("register")} style={{ cursor: "pointer", color: "#00f5ff" }}>Create Account</span>
                         </div>
                     </>
@@ -105,7 +105,7 @@ export default function LoginPage({ onClose }) {
                         <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 12 }} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
                         <input style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", marginBottom: 16 }} type="password" placeholder="Password (min 6 chars)" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required />
                         <button type="submit" disabled={busy} style={{ ...T.btnP, width: "100%" }}>{busy ? "Initializing..." : "Register Now"}</button>
-                        <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.85rem", color: "#546e7a" }}>
+                        <div style={{ textAlign: "center", marginTop: 16, fontSize: "0.85rem", color: "var(--txt2)" }}>
                             Already guarded? <span onClick={() => setMode("login")} style={{ cursor: "pointer", color: "#00f5ff" }}>Sign In</span>
                         </div>
                     </form>

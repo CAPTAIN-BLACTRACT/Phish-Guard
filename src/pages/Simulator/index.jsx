@@ -1,59 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { T } from "../styles";
-import { SIM_STAGES } from "../constants";
-import { logSimulatorAttempt } from "../firebase";
-import { useUser, useAuth } from "../context";
+import { T } from '../../styles';
+import { SIM_STAGES } from '../../constants';
+import { logSimulatorAttempt } from '../../firebase';
+import { useUser, useAuth } from '../../context';
+import { PageHeader } from '../../components';
 
-// ─── CANVAS COMPONENTS (Matrix, Particle, Hex, Lightning) ────────────────────
-// Moved inside to keep file self-contained or could be moved to components/canvas
-function MatrixCanvas() {
-  const ref = useRef(null);
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const chars = "01アイウエオカキクケコサシスセソタチツテトNULL PHISHGUARD XOR AES SHA256 EXPLOIT PAYLOAD THREAT DETECT VOID";
-    let W, H, drops;
-    const init = () => {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-      const cols = Math.floor(W / 12);
-      drops = Array.from({ length: cols }, () => (Math.random() * -H) / 12);
-    };
-    const draw = () => {
-      ctx.fillStyle = "rgba(0,5,9,0.048)";
-      ctx.fillRect(0, 0, W, H);
-      drops.forEach((y, i) => {
-        const char = chars[Math.floor(Math.random() * chars.length)];
-        if (y > 0) {
-          ctx.font = "bold 12px 'Share Tech Mono', monospace";
-          ctx.fillStyle = i % 4 === 0 ? "#00ff9d" : i % 6 === 0 ? "#d500f9" : "#00f5ff";
-          ctx.globalAlpha = 0.85;
-          ctx.fillText(char, i * 12, y * 12);
-        }
-        if (y * 12 > H && Math.random() > 0.972) drops[i] = 0;
-        drops[i] += 0.5 + Math.random() * 0.2;
-      });
-    };
-    init();
-    window.addEventListener("resize", init);
-    const id = setInterval(draw, 50);
-    return () => { clearInterval(id); window.removeEventListener("resize", init); };
-  }, []);
-  return <canvas ref={ref} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.045 }} />;
-}
-
-function CyberBackground() {
-  return (
-    <>
-      <MatrixCanvas />
-      <div style={{
-        position: "fixed", inset: 0, zIndex: 1, pointerEvents: "none",
-        background: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px)",
-      }} />
-    </>
-  );
-}
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function FlagElement({ id, text, hint, flagged, submitted, revealed, onToggle }) {
@@ -152,24 +103,21 @@ export function SimulatorPage({ showToast }) {
   });
 
   return (
-    <div style={{ ...T.page, background: "#000509", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
+    <div style={{ ...T.page, background: "transparent", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
       <style>{`
           @media (max-width: 900px) {
             .cards-grid { grid-template-columns: 1fr !important; }
             .pg-container { padding: 80px 15px 60px !important; }
           }
         `}</style>
-      <CyberBackground />
+
       <div style={{ position: "relative", zIndex: 2, padding: "80px 40px 60px" }} className="pg-container">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 36, flexWrap: "wrap", gap: 20 }}>
-          <div>
-            <div style={T.secLbl}><span style={{ color: "rgba(0,245,255,0.4)" }}>//</span> SIMULATOR</div>
-            <h2 style={T.secTitle}>Spot the Phishing</h2>
-          </div>
+          <PageHeader label="SIMULATOR" title="Spot the Phishing" />
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
-          <span style={{ fontFamily: "Share Tech Mono, monospace", fontSize: ".73rem", color: "#546e7a" }}>Stage {stageIdx + 1}/{SIM_STAGES.length}</span>
+          <span style={{ fontFamily: "Share Tech Mono, monospace", fontSize: ".73rem", color: "var(--txt2)" }}>Stage {stageIdx + 1}/{SIM_STAGES.length}</span>
           <div style={{ flex: 1, height: 6, background: "rgba(0,245,255,.1)", borderRadius: 100, overflow: "hidden" }}>
             <div style={{ height: "100%", background: "linear-gradient(90deg,#00f5ff,#00ff9d)", width: `${pct}%`, transition: "width .6s" }} />
           </div>
@@ -179,7 +127,7 @@ export function SimulatorPage({ showToast }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }} className="cards-grid">
           <div style={{ ...T.card, overflow: "hidden" }}>
             <div style={panelHdr(true)}>✅ LEGITIMATE</div>
-            <div style={{ padding: 20, fontSize: ".85rem", lineHeight: 1.6, color: "#546e7a" }}>
+            <div style={{ padding: 20, fontSize: ".85rem", lineHeight: 1.6, color: "var(--txt2)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,255,157,.1)", border: "1px solid rgba(0,255,157,.3)", display: "flex", alignItems: "center", justifyContent: "center", color: "#00ff9d" }}>✓</div>
                 <div><div style={{ fontSize: ".8rem", fontWeight: 600, color: "#e0f7fa" }}>{stage.legit.from}</div><div style={{ fontFamily: "Share Tech Mono, monospace", fontSize: ".7rem", color: "#00ff9d" }}>{stage.legit.addr}</div></div>
@@ -189,7 +137,7 @@ export function SimulatorPage({ showToast }) {
           </div>
           <div style={{ ...T.card, overflow: "hidden" }}>
             <div style={panelHdr(false)}>🎣 SUSPICIOUS</div>
-            <div style={{ padding: 20, fontSize: ".85rem", lineHeight: 1.6, color: "#546e7a" }}>
+            <div style={{ padding: 20, fontSize: ".85rem", lineHeight: 1.6, color: "var(--txt2)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,23,68,.1)", border: "1px solid rgba(255,23,68,.3)", display: "flex", alignItems: "center", justifyContent: "center", color: "#ff1744" }}>!</div>
                 <div><div style={{ fontSize: ".8rem", fontWeight: 600, color: "#e0f7fa" }}>{stage.phish.from}</div><FlagElement id={stage.phish.flags[0].id} text={stage.phish.addr} hint={stage.phish.flags[0].hint} flagged={flagged} submitted={submitted} revealed={revealed} onToggle={toggleFlag} /></div>

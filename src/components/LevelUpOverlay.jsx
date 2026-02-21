@@ -76,7 +76,7 @@ export function LevelUpOverlay({ data, onClose }) {
         <p
           style={{
             fontSize:   "1rem",
-            color:      "#546e7a",
+            color:      "var(--txt2)",
             marginBottom: 24,
             fontFamily: "Share Tech Mono, monospace",
           }}

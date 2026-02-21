@@ -45,7 +45,7 @@ export function NavCard({ icon, title, desc, onClick }) {
                 >
                     {title}
                 </div>
-                <div style={{ fontSize: ".82rem", color: "#546e7a", lineHeight: 1.5 }}>
+                <div style={{ fontSize: ".82rem", color: "var(--txt2)", lineHeight: 1.5 }}>
                     {desc}
                 </div>
             </div>
@@ -101,7 +101,7 @@ export function RedFlagCard({ icon, name, desc, tip }) {
             <div
                 style={{
                     fontSize: ".83rem",
-                    color: "#546e7a",
+                    color: "var(--txt2)",
                     lineHeight: 1.6,
                     marginBottom: 9,
                     flex: 1,

@@ -72,12 +72,6 @@ export function Finn({ tip, onClick }) {
                                 OPEN ACADEMY
                             </button>
                         )}
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onClick?.(); }}
-                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.2)", color: "#90a4ae", padding: "4px 8px", fontSize: "0.6rem", borderRadius: 4, cursor: "pointer" }}
-                        >
-                            OK
-                        </button>
                     </div>
 
                     {/* Bubble Pointer */}

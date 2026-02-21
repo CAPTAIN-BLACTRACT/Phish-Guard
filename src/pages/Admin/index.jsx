@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { T } from "../styles";
-import { CyberBackground } from "../components";
-import { db, storage } from "../firebase/config";
+import { T } from '../../styles';
+import { PageHeader } from '../../components';
+import { db, storage } from '../../firebase/config';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -11,6 +11,10 @@ export function AdminPage({ showToast }) {
     const [activeTab, setActiveTab] = useState("quiz");
     const [loading, setLoading] = useState(false);
 
+    // Forms State
+    const [quizForm, setQuizForm] = useState({ question: "", options: ["", "", "", ""], answer: 0, explanation: "" });
+    const [galleryForm, setGalleryForm] = useState({ title: "", description: "", type: "phish", file: null });
+
     const handleAuth = (e) => {
         e.preventDefault();
         if (pass === "phishguard2026") setIsAuth(true);
@@ -19,11 +23,10 @@ export function AdminPage({ showToast }) {
 
     if (!isAuth) {
         return (
-            <div style={{ ...T.page, background: "#000509", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <CyberBackground />
+            <div style={{ ...T.page, background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+
                 <form onSubmit={handleAuth} style={{ ...T.card, padding: 40, maxWidth: 400, width: "100%", textAlign: "center" }}>
-                    <div style={T.secLbl}>// RESTRICTED AREA</div>
-                    <h1 style={{ ...T.secTitle, fontSize: "1.5rem", marginBottom: 25 }}>Admin Access</h1>
+                    <PageHeader label="RESTRICTED AREA" title="Admin Access" />
                     <input
                         type="password"
                         placeholder="ENTER ACCESS KEY"
@@ -36,10 +39,6 @@ export function AdminPage({ showToast }) {
             </div>
         )
     }
-
-    // Forms State
-    const [quizForm, setQuizForm] = useState({ question: "", options: ["", "", "", ""], answer: 0, explanation: "" });
-    const [galleryForm, setGalleryForm] = useState({ title: "", description: "", type: "phish", file: null });
 
     const handleAddQuiz = async (e) => {
         e.preventDefault();
@@ -84,12 +83,9 @@ export function AdminPage({ showToast }) {
 
     return (
         <div style={{ ...T.page, background: "#000509" }}>
-            <CyberBackground />
+
             <section style={T.sec}>
-                <div style={{ marginBottom: 30 }}>
-                    <div style={T.secLbl}>// COMMAND CENTER</div>
-                    <h1 style={T.secTitle}>Admin Dashboard</h1>
-                </div>
+                <PageHeader label="COMMAND CENTER" title="Admin Dashboard" />
 
                 <div style={{ display: "flex", gap: 12, marginBottom: 30, flexWrap: "wrap" }}>
                     {["quiz", "simulator", "gallery", "analytics"].map(tab => (
@@ -100,7 +96,7 @@ export function AdminPage({ showToast }) {
                                 ...T.btnG,
                                 background: activeTab === tab ? "rgba(0,245,255,0.1)" : "transparent",
                                 borderColor: activeTab === tab ? "#00f5ff" : "rgba(0,245,255,0.2)",
-                                color: activeTab === tab ? "#00f5ff" : "#546e7a",
+                                color: activeTab === tab ? "#00f5ff" : "var(--txt2)",
                                 textTransform: "uppercase",
                                 padding: "10px 20px"
                             }}
@@ -115,7 +111,7 @@ export function AdminPage({ showToast }) {
                         <form onSubmit={handleAddQuiz}>
                             <h2 style={{ ...T.secTitle, fontSize: "1.2rem", color: "#00f5ff", marginBottom: 20 }}>Add New Quiz Question</h2>
                             <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
-                                <label style={{ color: "#546e7a", fontSize: "0.8rem" }}>Question Text</label>
+                                <label style={{ color: "var(--txt2)", fontSize: "0.8rem" }}>Question Text</label>
                                 <textarea
                                     style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 12, borderRadius: 4, fontFamily: "inherit", minHeight: 80 }}
                                     value={quizForm.question}
@@ -126,7 +122,7 @@ export function AdminPage({ showToast }) {
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 15 }}>
                                     {quizForm.options.map((opt, i) => (
                                         <div key={i}>
-                                            <label style={{ color: "#546e7a", fontSize: "0.7rem" }}>Option {i + 1}</label>
+                                            <label style={{ color: "var(--txt2)", fontSize: "0.7rem" }}>Option {i + 1}</label>
                                             <input
                                                 style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 10, borderRadius: 4 }}
                                                 value={opt}
@@ -143,7 +139,7 @@ export function AdminPage({ showToast }) {
 
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 15 }}>
                                     <div>
-                                        <label style={{ color: "#546e7a", fontSize: "0.8rem" }}>Correct Answer (Index 0-3)</label>
+                                        <label style={{ color: "var(--txt2)", fontSize: "0.8rem" }}>Correct Answer (Index 0-3)</label>
                                         <input
                                             type="number" min="0" max="3"
                                             style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 10, borderRadius: 4 }}
@@ -152,7 +148,7 @@ export function AdminPage({ showToast }) {
                                         />
                                     </div>
                                     <div>
-                                        <label style={{ color: "#546e7a", fontSize: "0.8rem" }}>Difficulty Level</label>
+                                        <label style={{ color: "var(--txt2)", fontSize: "0.8rem" }}>Difficulty Level</label>
                                         <select style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 10, borderRadius: 4 }}>
                                             <option>Easy</option>
                                             <option>Medium</option>
@@ -173,7 +169,7 @@ export function AdminPage({ showToast }) {
                             <h2 style={{ ...T.secTitle, fontSize: "1.2rem", color: "#00f5ff", marginBottom: 20 }}>Upload Threat Example</h2>
                             <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
                                 <div>
-                                    <label style={{ color: "#546e7a", fontSize: "0.8rem" }}>Threat Title</label>
+                                    <label style={{ color: "var(--txt2)", fontSize: "0.8rem" }}>Threat Title</label>
                                     <input
                                         style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 10, borderRadius: 4 }}
                                         value={galleryForm.title}
@@ -182,7 +178,7 @@ export function AdminPage({ showToast }) {
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ color: "#546e7a", fontSize: "0.8rem" }}>Description / Critical Info</label>
+                                    <label style={{ color: "var(--txt2)", fontSize: "0.8rem" }}>Description / Critical Info</label>
                                     <textarea
                                         style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 12, borderRadius: 4, minHeight: 80 }}
                                         value={galleryForm.description}
@@ -192,7 +188,7 @@ export function AdminPage({ showToast }) {
                                 </div>
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 15 }}>
                                     <div>
-                                        <label style={{ color: "#546e7a", fontSize: "0.8rem" }}>Type</label>
+                                        <label style={{ color: "var(--txt2)", fontSize: "0.8rem" }}>Type</label>
                                         <select
                                             value={galleryForm.type}
                                             onChange={e => setGalleryForm({ ...galleryForm, type: e.target.value })}
@@ -204,11 +200,11 @@ export function AdminPage({ showToast }) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style={{ color: "#546e7a", fontSize: "0.8rem" }}>Screenshot</label>
+                                        <label style={{ color: "var(--txt2)", fontSize: "0.8rem" }}>Screenshot</label>
                                         <input
                                             type="file" accept="image/*"
                                             onChange={e => setGalleryForm({ ...galleryForm, file: e.target.files[0] })}
-                                            style={{ color: "#546e7a", fontSize: "0.8rem" }}
+                                            style={{ color: "var(--txt2)", fontSize: "0.8rem" }}
                                         />
                                     </div>
                                 </div>
@@ -222,7 +218,7 @@ export function AdminPage({ showToast }) {
                     {activeTab === "simulator" && (
                         <div>
                             <h2 style={{ ...T.secTitle, fontSize: "1.2rem", color: "#00f5ff", marginBottom: 20 }}>Configure Simulation Stage</h2>
-                            <p style={{ color: "#546e7a" }}>Simulation deployment tools are coming soon. This will allow you to define email headers, body content, and specific red flags for new training scenarios.</p>
+                            <p style={{ color: "var(--txt2)" }}>Simulation deployment tools are coming soon. This will allow you to define email headers, body content, and specific red flags for new training scenarios.</p>
                         </div>
                     )}
 
@@ -235,7 +231,7 @@ export function AdminPage({ showToast }) {
                                 { lbl: "AVG DEFENSE SCORE", val: "78%" }
                             ].map(stat => (
                                 <div key={stat.lbl} style={{ padding: 20, background: "rgba(0,245,255,0.03)", border: "1px solid rgba(0,245,255,0.1)", borderRadius: 4 }}>
-                                    <div style={{ color: "#546e7a", fontSize: "0.7rem", marginBottom: 8 }}>{stat.lbl}</div>
+                                    <div style={{ color: "var(--txt2)", fontSize: "0.7rem", marginBottom: 8 }}>{stat.lbl}</div>
                                     <div style={{ color: "#00f5ff", fontSize: "1.5rem", fontWeight: 700, fontFamily: "Orbitron" }}>{stat.val}</div>
                                 </div>
                             ))}

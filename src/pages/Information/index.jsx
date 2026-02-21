@@ -1,5 +1,5 @@
-import { T } from "../styles";
-import { CyberBackground } from "../components";
+import { T } from '../../styles';
+import { PageHeader } from '../../components';
 
 const CONTENT = {
     about: {
@@ -31,7 +31,7 @@ const CONTENT = {
         sections: [
             { h: "Is PhishGuard free?", p: "Yes, the basic training modules and simulator are free for individual recruits." },
             { h: "Will this protect my real accounts?", p: "While we provide the skills, you must apply them. PhishGuard is a training tool, not a security software suite." },
-            { h: "Can I use this for my team?", p: "We are developing enterprise features for organizations. Contact hello@phishguard.io for details." }
+            { h: "Can I use this for my team?", p: "We are developing enterprise features for organizations. Contact sumitboy2005@gmail.com for details." }
         ]
     },
     checklist: {
@@ -52,8 +52,8 @@ export function InformationPage({ type = "about", onBack }) {
     const data = CONTENT[type] || CONTENT.about;
 
     return (
-        <div style={{ ...T.page, background: "#000509" }}>
-            <CyberBackground />
+        <div style={{ ...T.page, background: "transparent" }}>
+
             <section style={{ ...T.sec, maxWidth: 900, margin: "0 auto", animation: "fuA .5s ease both" }}>
                 <button
                     onClick={onBack}
@@ -62,10 +62,7 @@ export function InformationPage({ type = "about", onBack }) {
                     ← EXIT TERMINAL
                 </button>
 
-                <div style={{ marginBottom: 40 }}>
-                    <div style={T.secLbl}>// {data.subtitle}</div>
-                    <h1 style={{ ...T.secTitle, fontSize: " clamp(2.5rem, 5vw, 4rem)" }}>{data.title}</h1>
-                </div>
+                <PageHeader label={data.subtitle} title={data.title} />
 
                 <div style={{ ...T.card, padding: 40, border: "1px solid rgba(0,245,255,0.15)" }}>
                     <p style={{ fontSize: "1.1rem", color: "#e0f7fa", lineHeight: 1.7, marginBottom: 40, whiteSpace: "pre-line" }}>
@@ -76,7 +73,7 @@ export function InformationPage({ type = "about", onBack }) {
                         {data.sections.map((s, i) => (
                             <div key={i} style={{ padding: 20, background: "rgba(0,245,255,0.03)", borderRadius: 4, borderLeft: "2px solid #00f5ff" }}>
                                 <h3 style={{ fontFamily: "Orbitron, sans-serif", fontSize: "1rem", color: "#00f5ff", marginBottom: 10 }}>{s.h}</h3>
-                                <p style={{ color: "#546e7a", fontSize: "0.9rem", lineHeight: 1.5 }}>{s.p}</p>
+                                <p style={{ color: "var(--txt2)", fontSize: "0.9rem", lineHeight: 1.5 }}>{s.p}</p>
                             </div>
                         ))}
                     </div>

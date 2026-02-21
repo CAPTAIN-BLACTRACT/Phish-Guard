@@ -1,31 +1,37 @@
 import { useState, useRef, useEffect } from "react";
-import { T } from "../styles";
-import { CyberBackground } from "../components";
+import { T } from '../../styles';
+
 
 const TUTORIAL_STEPS = [
     {
-        icon: "🏠",
-        title: "Welcome to PhishGuard",
-        desc: "Your journey to becoming a Cyber Defense Specialist starts here. Let's walk through the tools at your disposal.",
-        tip: "Tip: Use the crosshair cursor to identify potential threats!"
+        icon: "📧",
+        title: "Email Phishing Basics",
+        desc: "Master the fundamentals of email security. Learn about display name spoofing, urgent language, and suspicious attachments.",
+        tip: "Tip: Always check the sender's actual email address, not just the name!"
     },
     {
-        icon: "🎯",
-        title: "The Simulator",
-        desc: "Our interactive simulator presents real-world emails. Your job is to analyze headers, links, and tone to decide if it's legit or a threat.",
-        tip: "Tip: Hover over links to see their real destination."
+        icon: "🚩",
+        title: "Red Flag Identification",
+        desc: "Deep dive into the 6 universal indicators of a phishing attempt. From poor grammar to mismatched links.",
+        tip: "Tip: Hover over links to see the real destination in the status bar."
     },
     {
-        icon: "🧠",
-        title: "Adaptive Quizzes",
-        desc: "Test your theoretical knowledge. Quizzes adapt to your skill level and award XP for correct answers.",
-        tip: "Tip: Read the explanations carefully—they contain critical intel."
+        icon: "📱",
+        title: "SMS / Smishing",
+        desc: "Learn to identify malicious text messages. Mobile attacks are on the rise and often bypass traditional email filters.",
+        tip: "Tip: Banks will never ask for your PIN via text message!"
     },
     {
-        icon: "🖼️",
-        title: "Threat Gallery",
-        desc: "Browse a community-submitted library of actual phishing attacks. Seeing is believing—and learning.",
-        tip: "Tip: You can submit your own threats once you're an Admin."
+        icon: "🕵️",
+        title: "Spear Phishing",
+        desc: "Advanced social engineering targeted at specific individuals. Learn how attackers use OSINT to craft believable lies.",
+        tip: "Tip: Be careful what personal information you share on social media."
+    },
+    {
+        icon: "🚀",
+        title: "Advanced Social Engineering",
+        desc: "The final frontier. Protect against highly sophisticated multi-channel attacks and psychological manipulation.",
+        tip: "Tip: Zero-Trust is the only absolute defense—verify everything."
     }
 ];
 
@@ -49,7 +55,7 @@ const MOCK_RESOURCES = [
 export function AILearningPage() {
     const [view, setView] = useState("chat"); // "chat" | "tutorial"
     const [messages, setMessages] = useState([
-        { role: "ai", text: "Welcome, Agent. I am Finn-AI. My neural network is integrated with Google Gemini. How can I assist your training today?" }
+        { role: "ai", text: "Welcome, Agent. I am Finn-AI. My neural network is online and ready. How can I assist your training today?" }
     ]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
@@ -139,7 +145,7 @@ export function AILearningPage() {
         e.preventDefault();
         if (!input.trim() || loading) return;
 
-        const { logPlatformAction } = await import("../firebase/db");
+        const { logPlatformAction } = await import("../../firebase/db");
         logPlatformAction(null, "AI_QUERY_SENT", { length: input.length });
 
         const userMsg = { role: "user", text: input };
@@ -153,25 +159,25 @@ export function AILearningPage() {
     };
 
     return (
-        <div style={{ ...T.page, background: "#000509" }}>
-            <CyberBackground />
+        <div style={{ ...T.page, background: "transparent" }}>
+
             <section style={{ ...T.sec, maxWidth: 1200, margin: "0 auto" }}>
                 <div style={{ marginBottom: 40, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                     <div>
                         <div style={T.secLbl}>// NEURAL ACADEMY v2.0</div>
                         <h1 style={T.secTitle}>{view === "chat" ? "AI Intelligence Hub" : "Foundational Training"}</h1>
-                        <p style={{ color: "#546e7a" }}>Unified training environment with Google Gemini neural integration.</p>
+                        <p style={{ color: "var(--txt2)" }}>Unified training environment with advanced neural integration.</p>
                     </div>
                     <div style={{ display: "flex", gap: 10 }}>
                         <button
                             onClick={() => setView("chat")}
-                            style={{ ...T.btnHS, borderColor: view === "chat" ? "#00f5ff" : "rgba(255,255,255,0.1)", color: view === "chat" ? "#00f5ff" : "#546e7a" }}
+                            style={{ ...T.btnHS, borderColor: view === "chat" ? "#00f5ff" : "rgba(255,255,255,0.1)", color: view === "chat" ? "#00f5ff" : "var(--txt2)" }}
                         >
                             🤖 NEURAL LINK
                         </button>
                         <button
                             onClick={() => setView("tutorial")}
-                            style={{ ...T.btnHS, borderColor: view === "tutorial" ? "#00f5ff" : "rgba(255,255,255,0.1)", color: view === "tutorial" ? "#00f5ff" : "#546e7a" }}
+                            style={{ ...T.btnHS, borderColor: view === "tutorial" ? "#00f5ff" : "rgba(255,255,255,0.1)", color: view === "tutorial" ? "#00f5ff" : "var(--txt2)" }}
                         >
                             🎓 MODULES
                         </button>
@@ -186,7 +192,7 @@ export function AILearningPage() {
                             <>
                                 <div style={{ padding: 20, borderBottom: "1px solid rgba(0,245,255,0.1)", display: "flex", alignItems: "center", gap: 10 }}>
                                     <div style={{ width: 10, height: 10, borderRadius: "50%", background: loading ? "#ff1744" : "#00ff9d", boxShadow: `0 0 10px ${loading ? "#ff1744" : "#00ff9d"}`, animation: loading ? "pulse 1s infinite" : "none" }}></div>
-                                    <span style={{ fontFamily: "Orbitron", fontSize: "0.85rem", color: "#00f5ff" }}>FINN-GEMINI NEURAL LINK [{loading ? "PROCESSING" : "READY"}]</span>
+                                    <span style={{ fontFamily: "Orbitron", fontSize: "0.85rem", color: "#00f5ff" }}>FINN-AI NEURAL LINK [{loading ? "PROCESSING" : "READY"}]</span>
                                 </div>
 
                                 <div style={{ flex: 1, padding: 25, overflowY: "auto", display: "flex", flexDirection: "column", gap: 15 }}>
@@ -214,7 +220,7 @@ export function AILearningPage() {
                                 <form onSubmit={handleSend} style={{ padding: 20, borderTop: "1px solid rgba(0,245,255,0.1)", display: "flex", gap: 10 }}>
                                     <input
                                         style={{ flex: 1, background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: "12px 15px", borderRadius: 4, fontFamily: "inherit" }}
-                                        placeholder="Consult Gemini about suspicious traffic..."
+                                        placeholder="Ask Finn-AI about suspicious traffic..."
                                         value={input}
                                         onChange={e => setInput(e.target.value)}
                                         disabled={loading}
@@ -245,25 +251,76 @@ export function AILearningPage() {
                         )}
                     </div>
 
-                    {/* Resources Sidebar */}
+                    {/* Learning Map Sidebar */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 20, overflowY: "auto" }}>
-                        <h3 style={{ color: "#546e7a", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 5 }}>Multimedia Library</h3>
+                        <div style={{ ...T.card, padding: 20 }}>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 15 }}>// LEARNING MAP</div>
+                            {[
+                                { name: "Email Phishing Basics", sub: "5 levels completed", status: "done" },
+                                { name: "Red Flag Identification", sub: "6 levels completed", status: "done" },
+                                { name: "SMS / Smishing", sub: "Level 2 of 5 in progress", status: "active" },
+                                { name: "Spear Phishing", sub: "Unlock at Level 10", status: "locked" },
+                                { name: "Advanced Social Engineering", sub: "Unlock at Level 15", status: "locked" },
+                            ].map((m, i) => {
+                                const dc = m.status === "done" ? "#00ff9d" : m.status === "active" ? "#00f5ff" : "var(--txt2)";
+                                return (
+                                    <div key={i} style={{ marginBottom: 12, opacity: m.status === "locked" ? 0.6 : 1 }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                            <span style={{ fontSize: "0.8rem", color: m.status === "locked" ? "var(--txt2)" : "#fff", fontWeight: 600 }}>{m.name}</span>
+                                            <span style={{ fontSize: "0.6rem", color: dc, fontFamily: "Share Tech Mono" }}>
+                                                {m.status === "done" ? "✓" : m.status === "active" ? "→" : "🔒"}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: "0.65rem", color: "var(--txt2)", fontFamily: "Share Tech Mono" }}>{m.sub}</div>
+                                        <div style={{ height: 2, background: "rgba(255,255,255,0.05)", marginTop: 6, borderRadius: 1, position: "relative" }}>
+                                            <div style={{
+                                                position: "absolute", left: 0, top: 0, height: "100%",
+                                                width: m.status === "done" ? "100%" : (m.status === "active" ? "40%" : "0%"),
+                                                background: dc, boxShadow: `0 0 8px ${dc}`
+                                            }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Achievement Badges */}
+                        <div style={{ ...T.card, padding: 20 }}>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 15 }}>// ACTIVE ACHIEVEMENTS</div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+                                {[
+                                    { icon: "🎯", name: "Blood", e: true },
+                                    { icon: "⚡", name: "Spotter", e: true },
+                                    { icon: "🔗", name: "Draw", e: true },
+                                    { icon: "🛡️", name: "Link", e: true },
+                                ].map((b, i) => (
+                                    <div key={i} style={{
+                                        textAlign: "center",
+                                        padding: 8,
+                                        background: "rgba(0,245,255,0.05)",
+                                        border: "1px solid rgba(0,245,255,0.2)",
+                                        borderRadius: 4
+                                    }}>
+                                        <div style={{ fontSize: "1.2rem" }}>{b.icon}</div>
+                                        <div style={{ fontSize: "0.5rem", color: "#00f5ff", fontFamily: "Share Tech Mono", marginTop: 4 }}>{b.name}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <h3 style={{ color: "var(--txt2)", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 5 }}>Multimedia Library</h3>
                         {MOCK_RESOURCES.map((r, i) => (
                             <div key={i} style={{ ...T.card, padding: 20, cursor: "pointer", transition: "all 0.2s" }} className="res-card">
                                 <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 12 }}>
                                     <span style={{ fontSize: "1.5rem" }}>{r.icon}</span>
                                     <div>
                                         <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#00f5ff" }}>{r.title}</div>
-                                        <div style={{ fontSize: "0.7rem", color: "#546e7a" }}>{r.type.toUpperCase()}</div>
+                                        <div style={{ fontSize: "0.7rem", color: "var(--txt2)" }}>{r.type.toUpperCase()}</div>
                                     </div>
                                 </div>
                                 <p style={{ fontSize: "0.75rem", color: "#90a4ae", lineHeight: 1.4 }}>{r.desc}</p>
                             </div>
                         ))}
-                        <div style={{ marginTop: "auto", padding: 15, background: "rgba(213,0,249,0.05)", border: "1px dashed rgba(213,0,249,0.3)", borderRadius: 8 }}>
-                            <div style={{ fontSize: "0.7rem", color: "#d500f9", fontWeight: 800, marginBottom: 5 }}>// SYSTEM NOTE</div>
-                            <div style={{ fontSize: "0.75rem", color: "#90a4ae" }}>Complete Foundation Modules to unlock Elite certifications.</div>
-                        </div>
                     </div>
 
                 </div>

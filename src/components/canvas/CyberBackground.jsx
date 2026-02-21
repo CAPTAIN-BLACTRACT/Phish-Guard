@@ -1,4 +1,4 @@
-import { MatrixCanvas } from "../MatrixCanvas";
+import { MatrixCanvas } from "./MatrixCanvas";
 import { ParticleCanvas } from "./ParticleCanvas";
 import { HexCanvas } from "./HexCanvas";
 import { LightningStreaks } from "./LightningStreaks";
@@ -38,10 +38,17 @@ export function CyberBackground() {
             radial-gradient(ellipse 40% 40% at 100% 50%,rgba(213,0,249,0.04) 0%,transparent 60%)`,
             }} />
 
+            {/* Ambient Darkening layer for better content readability */}
+            <div style={{
+                position: "fixed", inset: 0, zIndex: -1, pointerEvents: "none",
+                background: "rgba(0,5,10,0.7)",
+                backdropFilter: "blur(2px)",
+            }} />
+
             {/* Scanline overlay */}
             <div style={{
                 position: "fixed", inset: 0, zIndex: 1, pointerEvents: "none",
-                background: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px)",
+                background: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px)",
             }} />
         </>
     );

@@ -14,7 +14,7 @@ export const GLOBAL_CSS = `
     --purple: #d500f9;
     --gold:   #ffd600;
     --txt:    #e0f7fa;
-    --txt2:   #546e7a;
+    --txt2:   #b0bec5;
     --glow:   rgba(0,245,255,0.25);
   }
 
