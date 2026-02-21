@@ -105,8 +105,8 @@ export function ParticleCanvas() {
                 const pr = p.r * (0.75 + Math.sin(p.pulse) * 0.25);
                 ctx.beginPath(); ctx.arc(p.x, p.y, pr, 0, Math.PI * 2);
                 ctx.fillStyle = `rgba(${r},${g},${b},0.8)`;
-                // Removed expensive shadowBlur for performance
-                ctx.fill();
+                ctx.shadowColor = `rgba(${r},${g},${b},0.5)`; ctx.shadowBlur = 7;
+                ctx.fill(); ctx.shadowBlur = 0;
             });
             raf = requestAnimationFrame(frame);
         };
