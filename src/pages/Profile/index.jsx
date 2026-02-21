@@ -146,7 +146,7 @@ export function ProfilePage({ showToast }) {
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 30 }}>
 
-                    {/* ── LEFT: Avatar & Badges ── */}
+                    {/* -- LEFT: Avatar & Badges -- */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                         <div style={{ ...T.card, padding: 30, textAlign: "center" }}>
                             <div style={{ position: "relative", width: 120, height: 120, margin: "0 auto 20px" }}>
@@ -184,7 +184,7 @@ export function ProfilePage({ showToast }) {
                             </div>
                             <div style={{ marginTop: 15 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6rem", fontFamily: "Share Tech Mono", color: "var(--txt2)", marginBottom: 4 }}>
-                                    <span>LEVEL {level} → {level + 1}</span>
+                                    <span>LEVEL {level} &rarr; {level + 1}</span>
                                     <span>{Math.round(progress)}%</span>
                                 </div>
                                 <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 3, overflow: "hidden" }}>
@@ -211,9 +211,71 @@ export function ProfilePage({ showToast }) {
                                 })}
                             </div>
                         </div>
+                        {/* -- SECURITY -- */}
+                        <div style={{ ...T.card, padding: 28 }}>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>// NEURAL ACADEMY TRACKING</div>
+                            <div>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                    <div style={{ fontSize: "0.78rem", color: "#e0f7fa" }}>
+                                        {completedModules}/{MODULES.length} modules completed
+                                    </div>
+                                    <div style={{ fontSize: "0.72rem", color: "#00f5ff", fontFamily: "Share Tech Mono" }}>
+                                        {moduleProgressPct}%
+                                    </div>
+                                </div>
+                                <div style={{ height: 6, background: "rgba(255,255,255,0.07)", borderRadius: 4, overflow: "hidden", marginBottom: 10 }}>
+                                    <div style={{ width: `${moduleProgressPct}%`, height: "100%", background: "linear-gradient(90deg,#00f5ff,#00ff9d)" }} />
+                                </div>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                                    <div style={{ padding: "10px 12px", border: "1px solid rgba(0,255,157,0.2)", borderRadius: 6, background: "rgba(0,255,157,0.06)" }}>
+                                        <div style={{ color: "#00ff9d", fontSize: "0.66rem", fontFamily: "Share Tech Mono" }}>COMPLETED</div>
+                                        <div style={{ color: "#e0f7fa", fontSize: "1.1rem", fontFamily: "Orbitron, sans-serif", fontWeight: 700 }}>{completedModules}</div>
+                                    </div>
+                                    <div style={{ padding: "10px 12px", border: "1px solid rgba(255,109,0,0.2)", borderRadius: 6, background: "rgba(255,109,0,0.06)" }}>
+                                        <div style={{ color: "#ffb36d", fontSize: "0.66rem", fontFamily: "Share Tech Mono" }}>PENDING</div>
+                                        <div style={{ color: "#e0f7fa", fontSize: "1.1rem", fontFamily: "Orbitron, sans-serif", fontWeight: 700 }}>{pendingModules}</div>
+                                    </div>
+                                </div>
+                                <div style={{ fontSize: "0.67rem", color: "var(--txt2)", marginBottom: 12 }}>
+                                    Started modules: {startedModules}
+                                </div>
+                                {pendingModules > 0 ? (
+                                    <button
+                                        onClick={() => navigate("/neural-academy")}
+                                        style={{ ...T.btnHP, width: "100%", justifyContent: "center", fontSize: "0.75rem" }}
+                                    >
+                                        Continue in Neural Academy
+                                    </button>
+                                ) : (
+                                    <div style={{ fontSize: "0.72rem", color: "#00ff9d", fontFamily: "Share Tech Mono" }}>
+                                        All modules completed.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div style={{ ...T.card, padding: 28 }}>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>// RECENT ACTIVITY LOGS</div>
+                            <div style={{ maxHeight: 220, overflowY: "auto" }}>
+                                {logsLoading && (
+                                    <div style={{ color: "var(--txt2)", fontSize: "0.75rem" }}>Loading logs...</div>
+                                )}
+                                {!logsLoading && activityLogs.length === 0 && (
+                                    <div style={{ color: "var(--txt2)", fontSize: "0.75rem" }}>No activity logs yet.</div>
+                                )}
+                                {!logsLoading && activityLogs.map((log) => (
+                                    <div key={log.id} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                        <div style={{ color: "#e0f7fa", fontSize: "0.75rem" }}>{actionLabel(log.action)}</div>
+                                        <div style={{ color: "var(--txt2)", fontSize: "0.65rem", fontFamily: "Share Tech Mono" }}>
+                                            {formatLogTime(log.timestamp)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    {/* ── RIGHT: Edit Form + Class + Security ── */}
+                    {/* -- RIGHT: Edit Form + Class + Security -- */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
                         {/* EDIT FORM */}
@@ -245,7 +307,7 @@ export function ProfilePage({ showToast }) {
                         </form>
                         </div>
 
-                        {/* ── CLASS / GROUP ── */}
+                        {/* -- CLASS / GROUP -- */}
                         <div style={{ ...T.card, padding: 28 }}>
                             <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>// TRAINING CLASS / FRIEND GROUP</div>
 
@@ -342,68 +404,6 @@ export function ProfilePage({ showToast }) {
                             )}
                         </div>
 
-                        {/* ── SECURITY ── */}
-                        <div style={{ ...T.card, padding: 28 }}>
-                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>// NEURAL ACADEMY TRACKING</div>
-                            <div>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                    <div style={{ fontSize: "0.78rem", color: "#e0f7fa" }}>
-                                        {completedModules}/{MODULES.length} modules completed
-                                    </div>
-                                    <div style={{ fontSize: "0.72rem", color: "#00f5ff", fontFamily: "Share Tech Mono" }}>
-                                        {moduleProgressPct}%
-                                    </div>
-                                </div>
-                                <div style={{ height: 6, background: "rgba(255,255,255,0.07)", borderRadius: 4, overflow: "hidden", marginBottom: 10 }}>
-                                    <div style={{ width: `${moduleProgressPct}%`, height: "100%", background: "linear-gradient(90deg,#00f5ff,#00ff9d)" }} />
-                                </div>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-                                    <div style={{ padding: "10px 12px", border: "1px solid rgba(0,255,157,0.2)", borderRadius: 6, background: "rgba(0,255,157,0.06)" }}>
-                                        <div style={{ color: "#00ff9d", fontSize: "0.66rem", fontFamily: "Share Tech Mono" }}>COMPLETED</div>
-                                        <div style={{ color: "#e0f7fa", fontSize: "1.1rem", fontFamily: "Orbitron, sans-serif", fontWeight: 700 }}>{completedModules}</div>
-                                    </div>
-                                    <div style={{ padding: "10px 12px", border: "1px solid rgba(255,109,0,0.2)", borderRadius: 6, background: "rgba(255,109,0,0.06)" }}>
-                                        <div style={{ color: "#ffb36d", fontSize: "0.66rem", fontFamily: "Share Tech Mono" }}>PENDING</div>
-                                        <div style={{ color: "#e0f7fa", fontSize: "1.1rem", fontFamily: "Orbitron, sans-serif", fontWeight: 700 }}>{pendingModules}</div>
-                                    </div>
-                                </div>
-                                <div style={{ fontSize: "0.67rem", color: "var(--txt2)", marginBottom: 12 }}>
-                                    Started modules: {startedModules}
-                                </div>
-                                {pendingModules > 0 ? (
-                                    <button
-                                        onClick={() => navigate("/neural-academy")}
-                                        style={{ ...T.btnHP, width: "100%", justifyContent: "center", fontSize: "0.75rem" }}
-                                    >
-                                        Continue in Neural Academy
-                                    </button>
-                                ) : (
-                                    <div style={{ fontSize: "0.72rem", color: "#00ff9d", fontFamily: "Share Tech Mono" }}>
-                                        All modules completed.
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div style={{ ...T.card, padding: 28 }}>
-                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 14 }}>// RECENT ACTIVITY LOGS</div>
-                            <div style={{ maxHeight: 220, overflowY: "auto" }}>
-                                {logsLoading && (
-                                    <div style={{ color: "var(--txt2)", fontSize: "0.75rem" }}>Loading logs...</div>
-                                )}
-                                {!logsLoading && activityLogs.length === 0 && (
-                                    <div style={{ color: "var(--txt2)", fontSize: "0.75rem" }}>No activity logs yet.</div>
-                                )}
-                                {!logsLoading && activityLogs.map((log) => (
-                                    <div key={log.id} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                                        <div style={{ color: "#e0f7fa", fontSize: "0.75rem" }}>{actionLabel(log.action)}</div>
-                                        <div style={{ color: "var(--txt2)", fontSize: "0.65rem", fontFamily: "Share Tech Mono" }}>
-                                            {formatLogTime(log.timestamp)}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
 
                         <div style={{ ...T.card, padding: 28 }}>
                             <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 16 }}>// SECURITY &amp; AUTHENTICATION</div>
@@ -516,5 +516,6 @@ export function ProfilePage({ showToast }) {
         </div>
     );
 }
+
 
 
