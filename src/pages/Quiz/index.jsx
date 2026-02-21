@@ -173,30 +173,32 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
       ? (q.diff === "easy" ? 50 : q.diff === "medium" ? 100 : 150)
       : 10;
 
-    await awardXP(xpGain);
+    try {
+      await awardXP(xpGain);
+    } catch (e) {
+      console.warn("Failed to award XP:", e);
+    }
 
     if (user) {
       try {
-        await Promise.all([
-          saveQuizResult({
-            uid: user.uid,
-            questionId: q.id || qIdx,
-            correct,
-            xpEarned: xpGain,
-            topic: q.topic,
-            difficulty: q.diff,
-            score: correct ? 1 : 0,
-            total: 1,
-            category: q.topic || "general",
-          }),
-          updateStreak(),  // from UserContext
-          logPlatformAction(user.uid, "QUIZ_ANSWERED", {
-            questionId: q.id || qIdx,
-            correct,
-            xpEarned: xpGain,
-            difficulty: q.diff,
-          }),
-        ]);
+        await saveQuizResult({
+          uid: user.uid,
+          questionId: q.id || qIdx,
+          correct,
+          xpEarned: xpGain,
+          topic: q.topic,
+          difficulty: q.diff,
+          score: correct ? 1 : 0,
+          total: 1,
+          category: q.topic || "general",
+        });
+        await updateStreak();  // from UserContext
+        await logPlatformAction(user.uid, "QUIZ_ANSWERED", {
+          questionId: q.id || qIdx,
+          correct,
+          xpEarned: xpGain,
+          difficulty: q.diff,
+        });
       } catch (e) {
         if (e.code === 'permission-denied') {
           showToast("Warning: Progress not saved. Please verify your email to permanently save.", "inf");

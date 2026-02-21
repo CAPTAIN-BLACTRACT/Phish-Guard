@@ -167,27 +167,29 @@ export function SimulatorPage({ showToast }) {
     setSubmitted(true);
     const found = stage.phish.flags.filter((f) => flagged.has(f.id)).length;
     const xpGain = Math.round((found / total) * 80);
-    await awardXP(xpGain);
+    try {
+      await awardXP(xpGain);
+    } catch (e) {
+      console.warn("Failed to award XP:", e);
+    }
     if (user) {
       try {
-        await Promise.all([
-          logSimulatorAttempt({
-            uid: user.uid,
-            stageId: stage.id || stageIdx,
-            flagsFound: found,
-            totalFlags: total,
-            xpEarned: xpGain,
-            completed: found === total
-          }),
-          updateStreak(),  // from UserContext
-          logPlatformAction(user.uid, "SIMULATION_SUBMITTED", {
-            stageId: stage.id || stageIdx,
-            flagsFound: found,
-            totalFlags: total,
-            xpEarned: xpGain,
-            completed: found === total,
-          }),
-        ]);
+        await logSimulatorAttempt({
+          uid: user.uid,
+          stageId: stage.id || stageIdx,
+          flagsFound: found,
+          totalFlags: total,
+          xpEarned: xpGain,
+          completed: found === total
+        });
+        await updateStreak();  // from UserContext
+        await logPlatformAction(user.uid, "SIMULATION_SUBMITTED", {
+          stageId: stage.id || stageIdx,
+          flagsFound: found,
+          totalFlags: total,
+          xpEarned: xpGain,
+          completed: found === total,
+        });
       } catch (e) {
         if (e.code === 'permission-denied') {
           showToast("Warning: Progress not saved. Please verify your email to permanently save.", "inf");

@@ -304,28 +304,47 @@ export function AILearningPage() {
         }
 
         const xpGain = XP_BY_DIFFICULTY[selectedModule.diff] || 120;
+        let completedSaved = false;
         try {
-            await Promise.all([
-                saveTrainingModuleProgress({
-                    uid: user.uid,
-                    moduleId: selectedModule.id,
-                    moduleName: selectedModule.name,
-                    completed: true,
-                    resourcesTotal: selectedResourceCount,
-                    resourceType: "completion",
-                    xpEarned: xpGain,
-                    notes: "Completed from Neural Academy.",
-                }),
-                awardXP(xpGain),
-                logPlatformAction(user.uid, "TRAINING_COMPLETION_CLICKED", {
-                    moduleId: selectedModule.id,
-                    xpGain,
-                }),
-            ]);
-            await refreshProfile();
-            showToast(`Module completed. +${xpGain} XP awarded.`, "ok");
+            await saveTrainingModuleProgress({
+                uid: user.uid,
+                moduleId: selectedModule.id,
+                moduleName: selectedModule.name,
+                completed: true,
+                resourcesTotal: selectedResourceCount,
+                resourceType: "completion",
+                xpEarned: xpGain,
+                notes: "Completed from Neural Academy.",
+            });
+            completedSaved = true;
         } catch (e) {
             showToast(e.message || "Could not save module completion.", "ng");
+            return;
+        }
+
+        try {
+            await awardXP(xpGain);
+        } catch (e) {
+            console.warn("Failed to award XP:", e);
+        }
+
+        try {
+            await logPlatformAction(user.uid, "TRAINING_COMPLETION_CLICKED", {
+                moduleId: selectedModule.id,
+                xpGain,
+            });
+        } catch (e) {
+            console.warn("Failed to log completion action:", e);
+        }
+
+        try {
+            await refreshProfile();
+        } catch (e) {
+            console.warn("Failed to refresh profile after module completion:", e);
+        }
+
+        if (completedSaved) {
+            showToast(`Module completed. +${xpGain} XP awarded.`, "ok");
         }
     };
 

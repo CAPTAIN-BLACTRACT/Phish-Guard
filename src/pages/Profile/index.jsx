@@ -18,7 +18,7 @@ const INP = {
 export function ProfilePage({ showToast }) {
     const navigate = useNavigate();
     const { user, resetPassword, verifyEmail, linkGoogle, linkEmail, deleteAccount } = useAuth();
-    const { profile } = useUser();
+    const { profile, refreshProfile } = useUser();
     const [loading, setLoading] = useState(false);
     const [linkMode, setLinkMode] = useState(null);
     const [linkEmailData, setLinkEmailData] = useState({ email: "", password: "" });
@@ -313,16 +313,17 @@ export function ProfilePage({ showToast }) {
                                                 style={{ ...T.btnG, fontSize: "0.75rem", padding: "8px 14px" }}
                                             >📋 Copy Code</button>
                                             <button
-                                                onClick={async () => {
-                                                    if (!window.confirm("Leave this class? Your XP won't be lost.")) return;
-                                                    setLoading(true);
-                                                    try {
-                                                        await leaveClass(user.uid, profile.classCode);
-                                                        setClassInfo(null);
-                                                        showToast("Left class successfully", "ok");
-                                                    } catch (e) { showToast(e.message, "ng"); }
-                                                    finally { setLoading(false); }
-                                                }}
+                                            onClick={async () => {
+                                                if (!window.confirm("Leave this class? Your XP won't be lost.")) return;
+                                                setLoading(true);
+                                                try {
+                                                    await leaveClass(user.uid, profile.classCode);
+                                                    await refreshProfile();
+                                                    setClassInfo(null);
+                                                    showToast("Left class successfully", "ok");
+                                                } catch (e) { showToast(e.message, "ng"); }
+                                                finally { setLoading(false); }
+                                            }}
                                                 style={{ ...T.btnG, fontSize: "0.75rem", padding: "8px 14px", color: "#ff4757", borderColor: "rgba(255,71,87,0.3)" }}
                                             >🚪 Leave Class</button>
                                         </div>
@@ -343,6 +344,7 @@ export function ProfilePage({ showToast }) {
                                                 setLoading(true);
                                                 try {
                                                     const code = await createClass(user.uid, profile?.displayName || user?.displayName);
+                                                    await refreshProfile();
                                                     showToast(`Class created! Code: ${code}`, "ok");
                                                     const info = await getClassInfo(code);
                                                     setClassInfo(info);
@@ -370,6 +372,7 @@ export function ProfilePage({ showToast }) {
                                                     setLoading(true);
                                                     try {
                                                         await joinClass(user.uid, joinCode);
+                                                        await refreshProfile();
                                                         const info = await getClassInfo(joinCode);
                                                         setClassInfo(info);
                                                         setClassMode(null);
