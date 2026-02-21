@@ -71,6 +71,31 @@ export function AdminPage({ showToast }) {
     /* ── Auth ── */
     const handleAuth = (e) => {
         e.preventDefault();
+<<<<<<< sentinel/fix-hardcoded-admin-creds-18160925271158690453
+        const adminKey = import.meta.env.VITE_ADMIN_ACCESS_KEY;
+        if (adminKey && pass === adminKey) setIsAuth(true);
+        else showToast("INVALID ACCESS KEY", "ng");
+    };
+
+    if (!isAuth) {
+        return (
+            <div style={{ ...T.page, background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+
+                <form onSubmit={handleAuth} style={{ ...T.card, padding: 40, maxWidth: 400, width: "100%", textAlign: "center" }}>
+                    <PageHeader label="RESTRICTED AREA" title="Admin Access" />
+                    <input
+                        type="password"
+                        placeholder="ENTER ACCESS KEY"
+                        value={pass}
+                        onChange={e => setPass(e.target.value)}
+                        maxLength={32}
+                        style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 12, borderRadius: 4, textAlign: "center", fontFamily: "Share Tech Mono", marginBottom: 20 }}
+                    />
+                    <button type="submit" style={T.btnHP}>INITIALIZE SESSION</button>
+                </form>
+            </div>
+        )
+=======
         if (pass === ADMIN_KEY) setIsAuth(true);
         else showToast("INVALID ACCESS KEY", "ng");
     };
@@ -96,6 +121,7 @@ export function AdminPage({ showToast }) {
 
     async function loadSimList() {
         try { setSimList(await getAdminSimScenarios()); } catch (e) { showToast(e.message, "ng"); }
+>>>>>>> main
     }
 
     /* ── Quiz CRUD ── */
