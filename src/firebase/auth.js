@@ -12,6 +12,7 @@ import {
     signOut,
     onAuthStateChanged,
     updateProfile,
+    sendEmailVerification,
     signInAnonymously as firebaseSignInAnonymously,
 } from "firebase/auth";
 
@@ -43,6 +44,12 @@ export async function signInEmail(email, password) {
 
 export async function resetPassword(email) {
     await sendPasswordResetEmail(auth, email);
+}
+
+export async function verifyEmail() {
+    if (auth.currentUser) {
+        await sendEmailVerification(auth.currentUser);
+    }
 }
 
 export async function signInGuest() {

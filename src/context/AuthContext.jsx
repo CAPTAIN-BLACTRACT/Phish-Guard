@@ -15,6 +15,7 @@ import {
     signOutUser,
     resetPassword,
     signInGuest,
+    verifyEmail,
 } from "../firebase/auth";
 
 const AuthContext = createContext(null);
@@ -40,6 +41,7 @@ export function AuthProvider({ children }) {
         signOutUser,
         resetPassword,
         signInGuest,
+        verifyEmail,
     };
 
     // While Firebase resolves existing sessions don't flash the UI

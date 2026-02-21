@@ -1,98 +1,118 @@
-# 🛡️ PhishGuard — Cyber Threat Training Platform
+# 🛡️ PhishGuard — Advanced Phishing Awareness & Defense Platform
 
-> Beast-mode hackathon build · React + Vite · Firebase Integrated · AI-Academy
+> **React 18 · Vite 6 · Firebase · Finn-AI Neural Engine · Cyber Carnival Hackathon**
 
-PhishGuard is a fully gamified phishing-awareness training app built entirely in React with an aggressive cyber/military terminal aesthetic. It features real-time threat simulations, adaptive quizzes, and an AI-powered neural academy.
+PhishGuard is a high-fidelity, gamified phishing awareness and training platform. Built with an aggressive "Cyber-Tactical" aesthetic, it transforms traditional security training into an immersive experience featuring real-time threat simulations, adaptive learning algorithms, and an integrated AI advisor.
 
 ---
 
-## 🚀 Quick Start
+## 🌌 Core Intelligence Features
 
+### 🤖 Finn-AI Neural Advisor
+A sophisticated AI assistant integrated directly into the training grid. Finn-AI provides deep technical analysis of phishing tactics, parses malicious traffic patterns, and acts as a dynamic interlocutor for recruits. Optimized for speed using the latest Google Gemini neural nodes.
+
+### 🎭 High-Fidelity Simulator
+Interactive email and SMS simulation engine. Recruits are presented with complex, multi-layered phishing attempts where they must identify "Red Flags" like display name spoofing, mismatched URLs, and psychological triggers.
+
+### 🧠 Adaptive Quiz System
+Our awareness modules use a performance-based difficulty algorithm. The system tracks your accuracy in real-time, escalating the complexity of questions as you demonstrate mastery, ensuring that the training remains challenging for all skill levels.
+
+### 📡 Global Hall of Defenders
+A real-time synchronization grid powered by Firestore. Compete with defenders globally for XP and rank. Features a dynamic badge system that recognizes achievements in speed, accuracy, and training consistency.
+
+### 👤 Agent Dossier & Badges
+Persistent profile management tracking your evolution from a "Recruit" to an "Elite Defender". Integrated with the badge system to showcase earned achievements based on level, XP, and daily streaks.
+
+### 🖼️ Intelligence Gallery
+A community-driven threat intelligence hub where users submit and analyze real-world phishing examples, building a collective defense database.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React 18 (Hooks, Context API)
+- **Build System:** Vite 6
+- **Database:** Firebase Firestore (Real-time sync)
+- **Authentication:** Firebase Auth (Google + Credentials + Guest mode)
+- **Storage:** Firebase Storage (Avatar synchronization)
+- **AI Engine:** Google Gemini API (Weighted fallback sequence)
+- **PWA:** Vite PWA Plugin (Service Workers, Offline support, Installable)
+- **Styling:** Vanilla CSS-in-JS Design Tokens (Zero external UI libraries)
+
+---
+
+## 🚀 Deployment & Installation
+
+### 1. Initialize Local Environment
 ```bash
+git clone https://github.com/Binary-Beast25/phish-guard.git
+cd phish-guard
 npm install
-npm run dev        # http://localhost:3000
-npm run build      # production build → dist/
-npm run preview    # preview production build
 ```
 
----
-
-## 🔥 New Features
-
-- **🤖 Gemini AI Integration**: Advanced neural link powered by Google Gemini (1.5 Pro/Flash), providing dynamic cybersecurity insights and a responsive AI interlocutor (Finn-AI).
-- **📡 Firebase Cloud Infrastructure**: Synchronized defense grid using Firestore for real-time leaderboards, quizzes, and community-driven threat intelligence.
-- **🛡️ Neural Academy**: A consolidated learning hub merging interactive tutorials with AI-driven technical analysis and high-fidelity simulations.
-- **👤 Agent Dossier**: Encrypted profile management with persistent XP tracking, streak monitoring, and custom avatar synchronization via Firebase Storage.
-- **🛂 Admin Command Center**: Restricted access portal (`phishguard2026`) for managing global platform parameters and monitoring recruit progress.
-
----
-
-## 📁 Project Structure
-
-```
-phishguard/
-├── index.html                  # Vite HTML entry
-├── vite.config.js
-├── package.json
-├── firebase.json               # Firebase Hosting config
-└── src/
-    ├── main.jsx                # React root mount
-    ├── App.jsx                 # Root component — routing + global state
-    │
-    ├── firebase/               # Firebase configuration
-    │   ├── config.js           # SDK Initialisation
-    │   ├── auth.js             # Google Auth providers
-    │   └── seed.js             # Automatic DB seeding system
-    │
-    ├── constants/              # All static/fallback data
-    │   ├── questions.js        # Baseline quiz data
-    │   ├── leaderboard.js      # LB_DATA fallback
-    │   └── ...
-    │
-    ├── components/             # Shared UI components
-    │   ├── canvas/             # Cyber background layers (Particle, Matrix, Hex)
-    │   ├── Navbar.jsx          # Fixed top nav with live XP
-    │   ├── Finn.jsx            # Updated Mascot (Floating + Neural tips)
-    │   └── index.js
-    │
-    └── pages/                  # Platform Nodes
-        ├── HomePage.jsx        # Command Dashboard & Live Metrics
-        ├── AILearningPage.jsx  # Neural Academy (Gemini AI Link)
-        ├── ProfilePage.jsx     # Agent Dossier & Bio Config
-        ├── SimulatorPage.jsx   # Real-vs-Fake Threat Trainer
-        ├── QuizPage.jsx        # Adaptive Knowledge Check
-        ├── AdminPage.jsx       # Command Center (Restricted Access)
-        └── ...
-```
-
----
-
-## 🎨 Design System
-
-- **Fonts:** Orbitron (headings) · Rajdhani (body) · Share Tech Mono (labels/code)
-- **Colors:** Cyan `#00f5ff` · Green `#00ff9d` · Red `#ff1744` · Purple `#d500f9` · Gold `#ffd600`
-- **Effects:** Neural particle field · Hex-grid distortion · Scanlines · Ambient orbs
-- **Philosophy:** No generic external UI libraries (Tailwind, MUI). Pure CSS-in-JS and Vanilla JS logic for maximum tactical performance and artistic cohesion.
-
----
-
-## 🔑 Environment Configuration
-
+### 2. Configure Frequencies (.env)
 Create a `.env` file in the root directory:
 ```env
-VITE_GEMINI_API_KEY=your_google_gemini_api_key_here
+VITE_GEMINI_API_KEY=your_gemini_key
+VITE_FIREBASE_API_KEY=your_key
+VITE_FIREBASE_AUTH_DOMAIN=your_domain
+VITE_FIREBASE_PROJECT_ID=your_id
+VITE_FIREBASE_STORAGE_BUCKET=your_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_id
+VITE_FIREBASE_APP_ID=your_id
 ```
-The platform uses a priority-based fallback sequence: `Gemini 3.1 Pro (Preview)` → `Gemini 3 Pro` → `Gemini 1.5 Pro` → `Gemini 1.5 Flash`.
+
+### 3. Launch Platform
+```bash
+npm run dev        # Launch local dev server
+npm run build      # Compile production binaries
+npm run preview    # Verify production build locally
+```
 
 ---
 
-## 🛂 Admin Access
+## 📂 Architecture Overview
 
-Access the **Command Center** via the hidden route `/admin`.
-- **Default Key:** `phishguard2026`
+```
+src/
+├── components/         # Atomic UI units & tactical backgrounds
+│   ├── canvas/         # Matrix, Hex-grid, and Particle layers
+│   ├── Navbar.jsx      # Command header with live XP stream
+│   └── Finn.jsx        # Neural advisor mascot
+├── context/            # Auth & User state management
+├── firebase/           # Data persistence layer & Security rules
+├── hooks/              # Reusable logic (XP system, Toasts)
+├── pages/              # Core Platform Nodes
+│   ├── Home/           # Command Dashboard
+│   ├── AILearning/     # Neural Academy (AI Hub)
+│   ├── Simulator/      # Threat Trainer
+│   ├── Quiz/           # Adaptive Knowledge Check
+│   └── Leaderboard/    # Global Synchronization Hub
+└── styles/             # Design Tokens & Global CSS Variables
+```
 
 ---
 
-## 🛡️ License
+## 🍱 Design System
 
-Built for the **Cyber Beast 2026 Hackathon**. Educational Use Only.
+PhishGuard utilizes a custom design system centered on "Tactical Readability":
+
+- **Typography:** `Orbitron` for high-level headers, `Share Tech Mono` for system telemetry, and `Rajdhani` for high-speed content delivery.
+- **Palette:** High-contrast neon accents against a deep `#000509` void background.
+- **Animations:** CSS-based GPU-accelerated keyframes for scanlines, glitch effects, and neural pulses.
+
+---
+
+## 🛂 Admin Command Center
+
+The platform contains a restricted administrative portal for managing training data.
+- **Portal URL:** `/admin`
+- **Root Password:** `phishguard2026`
+
+---
+
+## 🛡️ License & Mission
+
+Built for the **Cyber Carnival Hackathon**. This platform is designed to turn the human firewall from the weakest link into the strongest defense by providing elite phishing awareness training.
+
+**Over and out. 📡**

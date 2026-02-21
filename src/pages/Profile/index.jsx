@@ -9,7 +9,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { BADGES } from '../../constants';
 
 export function ProfilePage({ showToast }) {
-    const { user } = useAuth();
+    const { user, resetPassword, verifyEmail } = useAuth();
     const { profile, loading: profileLoading } = useUser();
     const [loading, setLoading] = useState(false);
 
@@ -104,7 +104,17 @@ export function ProfilePage({ showToast }) {
                                 </label>
                             </div>
                             <h2 style={{ fontFamily: "Orbitron", fontSize: "1.2rem", color: "#e0f7fa" }}>{profile?.displayName || user?.displayName || "Agent"}</h2>
-                            <div style={{ color: "#00f5ff", fontFamily: "Share Tech Mono", fontSize: "0.8rem", marginBottom: 15 }}>LVL {level} DEFENDER</div>
+                            <div style={{ color: "#00f5ff", fontFamily: "Share Tech Mono", fontSize: "0.8rem", marginBottom: 5 }}>LVL {level} DEFENDER</div>
+                            <div style={{
+                                display: "inline-block", padding: "4px 10px", borderRadius: 4,
+                                fontSize: "0.65rem", fontFamily: "Share Tech Mono",
+                                background: user.emailVerified ? "rgba(0,255,157,0.1)" : "rgba(255,23,68,0.1)",
+                                color: user.emailVerified ? "#00ff9d" : "#ff1744",
+                                border: `1px solid ${user.emailVerified ? "rgba(0,255,157,0.2)" : "rgba(255,23,68,0.2)"}`,
+                                marginBottom: 15
+                            }}>
+                                STATUS: {user.emailVerified ? "VERIFIED" : "UNVERIFIED"}
+                            </div>
 
                             <div style={{ display: "flex", justifyContent: "space-around", borderTop: "1px solid rgba(0,245,255,0.1)", paddingTop: 20 }}>
                                 <div>
@@ -221,6 +231,51 @@ export function ProfilePage({ showToast }) {
                                 {loading ? "SYNCHRONIZING..." : "UPDATE DOSSIER"}
                             </button>
                         </form>
+
+                        <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 30 }}>
+                            <div style={{ ...T.secLbl, fontSize: "0.7rem", marginBottom: 20 }}>// SECURITY & AUTHENTICATION</div>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                {!user.emailVerified && user.providerData?.[0]?.providerId === 'password' && (
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await verifyEmail();
+                                                showToast("VERIFICATION TRANSMISSION SENT", "ok");
+                                            } catch (e) { showToast(e.message, "ng"); }
+                                        }}
+                                        style={{ ...T.btnG, width: "100%", fontSize: "0.85rem" }}
+                                    >
+                                        ✉️ Verify Email Address
+                                    </button>
+                                )}
+
+                                {user.providerData?.[0]?.providerId === 'password' && (
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await resetPassword(user.email);
+                                                showToast("RESET LINK TRANSMITTED", "ok");
+                                            } catch (e) { showToast(e.message, "ng"); }
+                                        }}
+                                        style={{ ...T.btnP, width: "100%", fontSize: "0.85rem", background: "transparent", border: "1px solid rgba(0,245,255,0.3)" }}
+                                    >
+                                        🔑 Send Password Reset Link
+                                    </button>
+                                )}
+
+                                {user.providerData?.[0]?.providerId === 'google.com' && (
+                                    <div style={{
+                                        padding: 15, background: "rgba(0,245,255,0.05)", borderRadius: 8,
+                                        border: "1px solid rgba(0,245,255,0.2)", fontSize: "0.8rem", color: "#00f5ff",
+                                        fontFamily: "Share Tech Mono"
+                                    }}>
+                                        ACCOUNT LINKED VIA GOOGLE <br />
+                                        <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)" }}>Security is managed by your Google Identity provider.</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
