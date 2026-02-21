@@ -206,126 +206,175 @@ export function LeaderboardPage() {
                 const rankColor =
                   u.rank === 1 ? "#ffd600" :
                     u.rank === 2 ? "#b0bec5" :
-                      u.rank === 3 ? "#ff9e80" : "#e0f7fa";
+                      u.rank === 3 ? "#ff9e80" : "rgba(0,245,255,0.7)";
 
                 const rankBg =
-                  u.rank === 1 ? "rgba(255,214,0,.06)" :
-                    u.rank === 2 ? "rgba(176,190,197,.04)" :
-                      u.rank === 3 ? "rgba(255,158,128,.05)" : "transparent";
+                  u.rank === 1 ? "rgba(255,214,0,.08)" :
+                    u.rank === 2 ? "rgba(176,190,197,.05)" :
+                      u.rank === 3 ? "rgba(255,158,128,.06)" : "transparent";
+
+                const displayName = u.displayName || u.name || "Anonymous Agent";
+                const initials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                const photoURL = u.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${u.id || u.uid}`;
 
                 return (
                   <tr
-                    key={u.rank}
+                    key={u.id || u.rank}
                     style={{
-                      background: u.isYou ? "rgba(0,245,255,.05)" : rankBg,
-                      borderTop: u.isYou ? "1px solid rgba(0,245,255,.2)" : "none",
-                      borderBottom: u.isYou ? "1px solid rgba(0,245,255,.1)" : "none",
-                      transition: "background .2s",
+                      background: u.isYou ? "rgba(0,245,255,0.08)" : rankBg,
+                      borderLeft: u.isYou ? "4px solid #00f5ff" : "4px solid transparent",
+                      transition: "all .3s ease",
                       animation: `rowIn .4s ${rowIdx * 0.05}s ease both`,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = u.isYou ? "rgba(0,245,255,0.12)" : "rgba(255,255,255,0.03)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = u.isYou ? "rgba(0,245,255,0.08)" : rankBg;
                     }}
                   >
                     {/* Rank */}
-                    <td style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,.04)", width: 60 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        {u.rank <= 3 && (
-                          <span style={{ fontSize: "1rem" }}>
+                    <td style={{ padding: "16px", borderBottom: "1px solid rgba(255,255,255,.04)", width: 80 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                        {u.rank <= 3 ? (
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: `${rankColor}22`, border: `1px solid ${rankColor}44`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "1.2rem", boxShadow: `0 0 10px ${rankColor}33`
+                          }}>
                             {u.rank === 1 ? "🥇" : u.rank === 2 ? "🥈" : "🥉"}
+                          </div>
+                        ) : (
+                          <span style={{
+                            fontFamily: "Orbitron, sans-serif",
+                            fontSize: ".9rem",
+                            fontWeight: 800,
+                            color: rankColor,
+                          }}>
+                            #{u.rank}
                           </span>
                         )}
-                        <span style={{
-                          fontFamily: "Orbitron, sans-serif",
-                          fontSize: u.rank <= 3 ? "1rem" : ".9rem",
-                          fontWeight: 800,
-                          color: rankColor,
-                          textShadow: u.rank <= 3 ? `0 0 15px ${rankColor}` : "none",
-                        }}>
-                          {u.rank <= 3 ? "" : `#${u.rank}`}
-                        </span>
                       </div>
                     </td>
 
                     {/* Defender */}
-                    <td style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{
-                          width: 38, height: 38, borderRadius: "50%",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: ".82rem", fontWeight: 700,
-                          background: u.color, color: "#000",
-                          boxShadow: u.isYou ? "0 0 12px rgba(0,245,255,.4)" : "none",
-                          border: u.isYou ? "2px solid rgba(0,245,255,.5)" : "2px solid transparent",
-                          flexShrink: 0,
-                        }}>
-                          {u.initials}
+                    <td style={{ padding: "16px", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                        <div style={{ position: "relative" }}>
+                          <img
+                            src={photoURL}
+                            alt={displayName}
+                            style={{
+                              width: 42, height: 42, borderRadius: "50%",
+                              border: `2px solid ${u.isYou ? "#00f5ff" : "rgba(0,245,255,0.2)"}`,
+                              background: "rgba(0,0,0,0.5)",
+                              boxShadow: u.isYou ? "0 0 15px rgba(0,245,255,0.3)" : "none",
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                          <div style={{
+                            display: 'none', width: 42, height: 42, borderRadius: "50%",
+                            background: "linear-gradient(135deg, #00f5ff, #d500f9)",
+                            color: "#000", fontSize: "0.8rem", fontWeight: 700,
+                            alignItems: "center", justifyContent: "center"
+                          }}>
+                            {initials}
+                          </div>
+                          {u.rank === 1 && (
+                            <div style={{ position: "absolute", right: -10, top: -8, fontSize: "1rem", transform: "rotate(-20deg)" }}>👑</div>
+                          )}
                         </div>
                         <div>
                           <div style={{
-                            fontSize: ".9rem", fontWeight: 600,
+                            fontSize: "1rem", fontWeight: 600,
                             color: u.isYou ? "#00f5ff" : "#e0f7fa",
+                            display: "flex", alignItems: "center", gap: 8
                           }}>
-                            {u.name}
+                            {displayName}
                             {u.isYou && (
                               <span style={{
-                                marginLeft: 8, fontSize: ".68rem",
+                                fontSize: ".6rem",
                                 fontFamily: "Share Tech Mono, monospace",
                                 color: "#00f5ff", letterSpacing: "0.1em",
-                                padding: "1px 6px",
-                                border: "1px solid rgba(0,245,255,.3)",
-                                borderRadius: 2,
-                                background: "rgba(0,245,255,.06)",
+                                padding: "2px 6px",
+                                border: "1px solid rgba(0,245,255,.4)",
+                                borderRadius: 4,
+                                background: "rgba(0,245,255,.1)",
+                                textTransform: "uppercase"
                               }}>YOU</span>
                             )}
                           </div>
                           <div style={{
                             fontSize: ".75rem", color: "var(--txt2)",
                             fontFamily: "Share Tech Mono, monospace",
+                            display: "flex", alignItems: "center", gap: 6
                           }}>
-                            Level {u.level}
+                            <span style={{ color: "rgba(0,245,255,0.5)" }}>LVL</span> {u.level || 1}
+                            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.2)" }} />
+                            {u.level >= 10 ? "GRANDMASTER" : u.level >= 7 ? "VETERAN" : u.level >= 4 ? "GUARDIAN" : "RECRUIT"}
                           </div>
                         </div>
                       </div>
                     </td>
 
                     {/* XP */}
-                    <td style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
-                      <span style={{
-                        fontFamily: "Share Tech Mono, monospace",
-                        fontSize: ".88rem",
-                        color: "#00f5ff",
-                        fontWeight: 700,
-                        textShadow: "0 0 10px rgba(0,245,255,.4)",
-                      }}>
-                        {u.xp.toLocaleString()} XP
-                      </span>
+                    <td style={{ padding: "16px", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{
+                          fontFamily: "Share Tech Mono, monospace",
+                          fontSize: ".95rem",
+                          color: "#00f5ff",
+                          fontWeight: 700,
+                          textShadow: "0 0 10px rgba(0,245,255,0.4)",
+                        }}>
+                          {(u.xp || 0).toLocaleString()}
+                        </span>
+                        <span style={{ fontSize: "0.6rem", color: "var(--txt2)", textTransform: "uppercase", letterSpacing: "1px" }}>Total XP</span>
+                      </div>
                     </td>
 
                     {/* Streak */}
-                    <td style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
-                      <span style={{
-                        fontFamily: "Share Tech Mono, monospace",
-                        fontSize: ".82rem",
-                        color: "#ff6d00",
-                      }}>
-                        🔥 {u.streak}d
-                      </span>
+                    <td style={{ padding: "16px", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{
+                          fontFamily: "Share Tech Mono, monospace",
+                          fontSize: ".9rem",
+                          color: (u.streak || 0) > 0 ? "#ff6d00" : "rgba(255,255,255,0.2)",
+                          fontWeight: 700
+                        }}>
+                          {u.streak || 0}
+                        </span>
+                        <span style={{ fontSize: "1.1rem" }}>{(u.streak || 0) >= 7 ? "🔥" : "⚡"}</span>
+                      </div>
                     </td>
 
                     {/* Badges */}
-                    <td style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
-                      <div style={{ display: "flex", gap: 5 }}>
-                        {getBadgesForUser(u).map((b, i) => (
-                          <span
-                            key={i}
-                            title={b}
-                            style={{
-                              fontSize: "1.1rem",
-                              filter: "drop-shadow(0 0 4px rgba(0,245,255,.3))",
-                              cursor: "default",
-                            }}
-                          >
-                            {b}
-                          </span>
-                        ))}
+                    <td style={{ padding: "16px", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", maxWidth: 150 }}>
+                        {getBadgesForUser(u).length > 0 ? (
+                          getBadgesForUser(u).map((b, i) => (
+                            <span
+                              key={i}
+                              title="Achievement Unlocked"
+                              style={{
+                                fontSize: "1.2rem",
+                                filter: "drop-shadow(0 0 5px rgba(0,245,255,.4))",
+                                cursor: "help",
+                                transition: "transform 0.2s",
+                              }}
+                              onMouseEnter={(e) => e.target.style.transform = "scale(1.3)"}
+                              onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
+                            >
+                              {b}
+                            </span>
+                          ))
+                        ) : (
+                          <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.1)", fontStyle: "italic" }}>No medals yet</span>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -336,6 +385,6 @@ export function LeaderboardPage() {
         </div>
 
       </div>
-    </div>
+    </div >
   );
 }
