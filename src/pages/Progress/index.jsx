@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { T } from '../../styles';
 import { BADGES, MODULES } from '../../constants';
 import { useAuth, useUser } from "../../context";
-import { PageHeader } from "../../components";
+import { PageHeader, XPBar } from "../../components";
 
 const ACTIVITY_STATS = [
   ["Quizzes Completed", "23", "#00f5ff"],
@@ -46,11 +46,20 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
   const { user } = useAuth();
   const { profile } = useUser();
 
+  const quizAttempts = profile?.quizAttempts || profile?.quizzesCompleted || 0;
+  const simAttempts = profile?.simulationsDone || 0;
+  const emailsFlagged = profile?.emailsFlagged || profile?.communityFlags || 0;
+  const moduleCompletions = profile?.trainingModulesCompleted || 0;
+  const quizAccuracy =
+    quizAttempts > 0
+      ? `${Math.round(((profile?.quizCorrect || 0) / quizAttempts) * 100)}%`
+      : "0%";
+
   const ACTIVITY_STATS = [
-    ["Quizzes Completed", profile?.quizzesCompleted || "0", "#00f5ff"],
-    ["Simulations Done", profile?.simulationsDone || "0", "#00ff9d"],
-    ["Streak Record", `${profile?.streak || 0} days`, "#ff6d00"],
-    ["Community Flags", profile?.communityFlags || "0", "#d500f9"],
+    ["Quizzes Completed", quizAttempts, "#00f5ff"],
+    ["Simulations Done", simAttempts, "#00ff9d"],
+    ["Modules Completed", moduleCompletions, "#ffd600"],
+    ["Emails Flagged", emailsFlagged, "#d500f9"],
   ];
 
   const agentName = profile?.displayName || user?.displayName || "Guest Agent";
@@ -96,7 +105,7 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
 
 
       {/* ── Page content ── */}
-      <div style={{ position: "relative", zIndex: 2, padding: "80px 60px 60px", maxWidth: 1100, margin: "0 auto" }}>
+      <div className="pg-container" style={{ position: "relative", zIndex: 2, padding: "80px 60px 60px", maxWidth: 1100, margin: "0 auto" }}>
 
         {/* ── Profile header ── */}
         <div style={{
@@ -122,8 +131,8 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
             }}>
               {agentName}
             </h2>
-            <p style={{ color: "var(--txt2)", fontFamily: "Share Tech Mono, monospace", fontSize: ".82rem" }}>
-              Level {level} · {profile?.specialization || "Awareness Recruit"} · Joined {profile?.createdAt ? "recently" : "60 days ago"}
+            <p style={{ color: "var(--txt2)", fontFamily: "Share Tech Mono, monospace", fontSize: ".82rem", textTransform: "uppercase" }}>
+              Level {level} · {level >= 10 ? "Grandmaster" : level >= 7 ? "Veteran" : level >= 4 ? "Guardian" : "Recruit"} · Joined {profile?.createdAt ? "recently" : "60 days ago"}
             </p>
             {/* Live status dot */}
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
@@ -162,12 +171,12 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
         </div>
 
         {/* ── Stat cards ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>
+        <div className="stat-cards-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>
           {[
             ["⚡", xp.toLocaleString(), "Total XP", "#00f5ff"],
             ["🔥", profile?.streak || 0, "Day Streak", "#ff6d00"],
-            ["🎯", profile?.accuracy || "0%", "Accuracy", "#00ff9d"],
-            ["📧", "34", "Emails Flagged", "#d500f9"],
+            ["🎯", quizAccuracy, "Accuracy", "#00ff9d"],
+            ["📧", emailsFlagged, "Emails Flagged", "#d500f9"],
           ].map(([icon, val, lbl, color], idx) => (
             <div
               key={lbl}
@@ -203,7 +212,7 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
         </div>
 
         {/* ── Two-column layout ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+        <div className="prog-main-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
 
           {/* ── LEFT col: badges + learning map ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -211,7 +220,7 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
             {/* Badge rack */}
             <div style={{ ...T.card, padding: 28 }}>
               <SectionLabel>ACHIEVEMENT BADGES</SectionLabel>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
+              <div className="badges-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
                 {BADGES.map((b, idx) => {
                   const isEarned = (b.req.type === 'level' && level >= b.req.value) ||
                     (b.req.type === 'xp' && xp >= b.req.value) ||
@@ -296,8 +305,34 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
               <SectionLabel>NEURAL TRAINING MODULES</SectionLabel>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {MODULES.map((m, i) => {
-                  const dc = dotColor(m.status);
-                  const isLocked = m.status === "locked";
+                  const userModule = profile?.trainingProgress?.[m.id];
+                  const unlocked = level >= m.reqLevel;
+                  const opened = userModule?.resourcesOpenedCount || 0;
+                  const totalResources = userModule?.resourcesTotalCount || m.resources?.length || 0;
+
+                  let status = "locked";
+                  let subText = `Unlock at Level ${m.reqLevel}`;
+                  let progressPct = 0;
+
+                  if (unlocked && userModule?.completed) {
+                    status = "done";
+                    subText = "Completed";
+                    progressPct = 100;
+                  } else if (unlocked && userModule) {
+                    status = "active";
+                    subText = totalResources > 0
+                      ? `${opened}/${totalResources} resources explored`
+                      : "In Progress";
+                    progressPct = userModule?.progressPct || 35;
+                  } else if (unlocked) {
+                    status = "active";
+                    subText = "Not started";
+                    progressPct = 0;
+                  }
+
+                  const dc = dotColor(status);
+                  const isLocked = status === "locked";
+
                   return (
                     <div
                       key={m.id}
@@ -319,7 +354,7 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
                           <span style={{ fontSize: "1.4rem", opacity: isLocked ? 0.3 : 1 }}>{m.icon}</span>
                           <div>
                             <div style={{ fontSize: "1rem", fontWeight: 700, color: isLocked ? "var(--txt2)" : "#fff" }}>{m.name}</div>
-                            <div style={{ fontSize: "0.7rem", color: dc, fontFamily: "Share Tech Mono" }}>{isLocked ? "ACCESS RESTRICTED" : m.sub}</div>
+                            <div style={{ fontSize: "0.7rem", color: dc, fontFamily: "Share Tech Mono" }}>{isLocked ? "ACCESS RESTRICTED" : subText}</div>
                           </div>
                         </div>
                         <span style={{
@@ -327,7 +362,7 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
                           color: dc, padding: "3px 10px", borderRadius: 4,
                           border: `1px solid ${dc}80`, background: `${dc}15`
                         }}>
-                          {badgeText(m.status)}
+                          {badgeText(status)}
                         </span>
                       </div>
 
@@ -343,7 +378,7 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
                       <div style={{ height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 2, position: "relative" }}>
                         <div style={{
                           position: "absolute", left: 0, top: 0, height: "100%",
-                          width: m.status === "done" ? "100%" : (m.status === "active" ? "40%" : "0%"),
+                          width: `${progressPct}%`,
                           background: dc, boxShadow: `0 0 10px ${dc}`
                         }} />
                       </div>
@@ -461,6 +496,17 @@ export function ProgressPage({ xp, level, xpPct, xpToNext }) {
           </div>
         </div>
       </div>
-    </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .pg-container { padding: 40px 10px !important; }
+          .stat-cards-grid { grid-template-columns: 1fr 1fr !important; }
+          .prog-main-grid { grid-template-columns: 1fr !important; }
+          .badges-grid { grid-template-columns: repeat(3, 1fr) !important; }
+        }
+        @media (max-width: 480px) {
+          .stat-cards-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+    </div >
   );
 }

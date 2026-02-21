@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { submitFeedback } from '../../firebase';
 import { T } from './styles';
 
 // ─── FEEDBACK SECTION ────────────────────────────────────────────────────────
@@ -11,7 +12,6 @@ export function FeedbackSection({ user }) {
     if (!msg.trim()) return;
     setStatus("sending");
     try {
-      const { submitFeedback } = await import("../../firebase/db");
       await submitFeedback({
         uid: user?.uid,
         email: user?.email,

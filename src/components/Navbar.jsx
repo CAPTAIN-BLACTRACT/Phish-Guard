@@ -4,17 +4,15 @@ import { useAuth } from "../context/AuthContext";
 import { useUser } from "../context/UserContext";
 
 const MAIN_LINKS = [
-  { id: "home", label: "Dashboard", icon: "🏠" },
-  { id: "simulator", label: "Simulator", icon: "🎯" },
-  { id: "quiz", label: "Quiz", icon: "🧠" },
   { id: "ai-learning", label: "Neural Academy", icon: "🤖" },
+  { id: "quiz", label: "Quiz", icon: "🧠" },
+  { id: "simulator", label: "Simulator", icon: "🎯" },
+  { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
+  { id: "progress", label: "Progress", icon: "📈" },
+  { id: "gallery", label: "Gallery", icon: "🖼️" },
 ];
 
-const EXTRA_LINKS = [
-  { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
-  { id: "gallery", label: "Gallery", icon: "🖼️" },
-  { id: "progress", label: "Progress", icon: "📈" },
-];
+const EXTRA_LINKS = [];
 
 
 /**
@@ -120,33 +118,58 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
                   onClick={() => setPage("profile")}
                 />
 
-                {/* Desktop Dropdown - simplified logic */}
+                {/* Desktop Dropdown */}
                 <div className="nav-dropdown" style={{
-                  position: "absolute", top: "110%", right: 0,
-                  background: "rgba(10,14,26,0.95)", border: "1px solid rgba(0,245,255,0.2)",
-                  borderRadius: 4, padding: "8px 0", minWidth: 140,
-                  zIndex: 9999, display: "none", animation: "fuA 0.2s ease both"
+                  position: "absolute", top: "130%", right: 0,
+                  background: "rgba(5,10,20,0.98)", border: "1px solid rgba(0,245,255,0.3)",
+                  borderRadius: 12, padding: "8px 0", minWidth: 200,
+                  zIndex: 9999, display: "none", animation: "fuA 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both",
+                  boxShadow: "0 10px 40px rgba(0,245,255,0.15), inset 0 0 15px rgba(0,245,255,0.05)",
+                  backdropFilter: "blur(12px)",
                 }}>
+                  {/* Arrow pointing up */}
+                  <div style={{
+                    position: "absolute", top: -7, right: 10, width: 14, height: 14,
+                    background: "rgba(5,10,20,1)", borderTop: "1px solid rgba(0,245,255,0.3)",
+                    borderLeft: "1px solid rgba(0,245,255,0.3)", transform: "rotate(45deg)",
+                  }} />
                   <div
                     onClick={() => setPage("profile")}
-                    style={{ padding: "8px 16px", color: "#e0f7fa", fontSize: "0.75rem", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                    className="nav-dd-item"
+                    style={{
+                      padding: "14px 20px", color: "#00f5ff", fontSize: "0.85rem", cursor: "pointer",
+                      borderBottom: "1px solid rgba(0,245,255,0.1)", display: "flex", alignItems: "center", gap: 12,
+                      transition: "all 0.2s", position: "relative", zIndex: 2
+                    }}
                   >
-                    📂 AGENT PROFILE
+                    <span style={{ fontSize: "1.3rem" }}>👤</span>
+                    <span style={{ fontFamily: "Orbitron, sans-serif", fontWeight: 700, letterSpacing: "0.05em" }}>AGENT PROFILE</span>
                   </div>
-                  {EXTRA_LINKS.map(({ id, label }) => (
+                  {EXTRA_LINKS.map(({ id, label, icon }) => (
                     <div
                       key={id}
                       onClick={() => setPage(id)}
-                      style={{ padding: "8px 16px", color: "#e0f7fa", fontSize: "0.75rem", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                      className="nav-dd-item"
+                      style={{
+                        padding: "10px 20px", color: "#e0f7fa", fontSize: "0.8rem", cursor: "pointer",
+                        borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 12,
+                        transition: "all 0.2s", position: "relative", zIndex: 2
+                      }}
                     >
-                      {label.toUpperCase()}
+                      <span style={{ fontSize: "1.2rem" }}>{icon}</span>
+                      <span style={{ fontFamily: "Share Tech Mono, monospace", textTransform: "uppercase" }}>{label}</span>
                     </div>
                   ))}
                   <div
                     onClick={() => signOutUser()}
-                    style={{ padding: "8px 16px", color: "#ff4757", fontSize: "0.75rem", cursor: "pointer" }}
+                    className="nav-dd-item-out"
+                    style={{
+                      padding: "14px 20px", color: "#ff4757", fontSize: "0.85rem", cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 12, transition: "all 0.2s", position: "relative", zIndex: 2
+                    }}
                   >
-                    🚪 TERMINATE SESSION
+                    <span style={{ fontSize: "1.3rem" }}>🚪</span>
+                    <span style={{ fontFamily: "Orbitron, sans-serif", fontWeight: 700, letterSpacing: "0.05em" }}>DISCONNECT</span>
                   </div>
                 </div>
               </div>
@@ -161,12 +184,15 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
               </span>
 
               <style>{`
-                div:hover > .nav-dropdown { display: block !important; }
-                .nav-dropdown div:hover { background: rgba(0,245,255,0.1); color: #fff !important; }
+                @media (min-width: 769px) {
+                  div:hover > .nav-dropdown { display: block !important; }
+                  .nav-dd-item:hover { background: rgba(0,245,255,0.08); padding-left: 26px !important; }
+                  .nav-dd-item-out:hover { background: rgba(255,71,87,0.08); padding-left: 26px !important; }
+                }
               `}</style>
             </div>
           ) : (
-            <button style={{
+            <button className="pg-login-btn" style={{
               ...T.btnP, padding: "0 14px", fontSize: ".72rem", height: 32,
             }} onClick={onLoginClick}>
               Sign In
@@ -199,7 +225,7 @@ export function Navbar({ page, setPage, xp, streak, onLoginClick }) {
           padding: "1rem",
           display: "flex", flexDirection: "column", gap: 8,
         }}>
-          {[{ id: "profile", label: "Profile", icon: "👤" }, ...MAIN_LINKS, ...EXTRA_LINKS].map(({ id, label, icon }) => (
+          {[...MAIN_LINKS, ...EXTRA_LINKS].map(({ id, label, icon }) => (
             <a key={id} href="#"
               onClick={(e) => { e.preventDefault(); setPage(id); setMenuOpen(false); }}
               style={{
