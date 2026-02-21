@@ -29,14 +29,14 @@ export default defineConfig({
             name: "Take a Quiz",
             short_name: "Quiz",
             description: "Jump straight into a phishing quiz",
-            url: "/?page=quiz",
+            url: "/#/quiz",
             icons: [{ src: "/pwa-192x192.svg", sizes: "192x192" }],
           },
           {
             name: "Simulator",
             short_name: "Simulate",
             description: "Run the phishing simulator",
-            url: "/?page=simulator",
+            url: "/#/simulator",
             icons: [{ src: "/pwa-192x192.svg", sizes: "192x192" }],
           },
         ],
@@ -63,7 +63,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true,   // Enable SW in dev for easier testing
+        enabled: false,
       },
     }),
   ],

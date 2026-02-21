@@ -8,7 +8,7 @@
  */
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useAuth } from "./AuthContext";
-import { getUserProfile, awardXP as dbAwardXP, unlockBadge } from "../firebase/db";
+import { getUserProfile, awardXP as dbAwardXP, unlockBadge, updateStreak as dbUpdateStreak } from "../firebase/db";
 
 const UserContext = createContext(null);
 
@@ -35,6 +35,22 @@ export function UserProvider({ children }) {
         return updated;
     }, [user]);
 
+    /** Update streak for today, persist to Firestore, and reflect locally. */
+    const updateStreak = useCallback(async () => {
+        if (!user) return;
+        const newStreak = await dbUpdateStreak(user.uid);
+        setProfile((prev) => ({ ...prev, streak: newStreak }));
+        return newStreak;
+    }, [user]);
+
+    /** Refresh profile from Firestore. */
+    const refreshProfile = useCallback(async () => {
+        if (!user) return;
+        const p = await getUserProfile(user.uid);
+        setProfile(p);
+        return p;
+    }, [user]);
+
     /** Unlock a badge. */
     const earnBadge = useCallback(async (badgeId) => {
         if (!user) return;
@@ -45,7 +61,7 @@ export function UserProvider({ children }) {
         }));
     }, [user]);
 
-    const value = { profile, loading, awardXP, earnBadge };
+    const value = { profile, loading, awardXP, updateStreak, refreshProfile, earnBadge };
 
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }

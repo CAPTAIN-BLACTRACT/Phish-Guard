@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { HashRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { seedDatabase } from "./firebase/seed";
 
 import { GLOBAL_CSS } from "./styles/globalStyles";
@@ -29,23 +29,27 @@ const ORBS = [
 ];
 
 // ─── PWA INSTALL PROMPT ───────────────────────────────────────────────────────
-let deferredPrompt = null;
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-});
-
 function PWAInstallBanner() {
-  const [show, setShow] = useState(!!deferredPrompt);
-  if (!show) return null;
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  if (!deferredPrompt || !visible) return null;
 
   const install = async () => {
-    if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") deferredPrompt = null;
-    setShow(false);
+    if (outcome === "accepted") setDeferredPrompt(null);
   };
+
 
   return (
     <div className="pwa-banner" style={{
@@ -74,7 +78,7 @@ function PWAInstallBanner() {
           boxShadow: "0 0 15px rgba(0,245,255,0.4)",
           transition: "transform 0.2s"
         }} onMouseEnter={e => e.target.style.transform = 'scale(1.05)'} onMouseLeave={e => e.target.style.transform = 'scale(1)'}>INSTALL NOW</button>
-        <button onClick={() => setShow(false)} style={{
+        <button onClick={() => setVisible(false)} style={{
           background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)",
           borderRadius: 8, padding: "0 15px",
           cursor: "pointer", fontSize: "0.8rem", fontWeight: 600
@@ -137,12 +141,23 @@ function AppInner() {
 
   const { xp, level, addXP, xpPct, xpToNext,
     levelUpData, clearLevelUp } = useXPSystem(
-      profile?.xp ?? (user ? 1250 : 0), profile?.level ?? (user ? 1 : 1)
+      profile?.xp ?? 0, profile?.level ?? 1
     );
+
+  // Sync local XP system when Firestore profile changes (e.g., on login or after earning XP)
+  const prevXPRef = useRef(profile?.xp ?? 0);
+  useEffect(() => {
+    if (!profile) return;
+    const diff = (profile.xp ?? 0) - prevXPRef.current;
+    if (diff > 0) addXP(diff);
+    prevXPRef.current = profile.xp ?? 0;
+  }, [profile?.xp]);
+
   const { toast, showToast } = useToast();
   const { currentTip, nextTip } = useFinnTip();
 
-  const STREAK = profile?.streak ?? (user ? 5 : 0);
+  // Always read streak from live Firestore profile
+  const STREAK = profile?.streak ?? 0;
 
   const xpProps = { xp, level, xpPct, xpToNext, addXP };
   const toastProp = { showToast };
@@ -223,7 +238,7 @@ function AppInner() {
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/gallery" element={<GalleryPage {...toastProp} />} />
         <Route path="/progress" element={<ProgressPage {...xpProps} />} />
-        <Route path="/admin" element={<AdminRoute><AdminPage {...toastProp} /></AdminRoute>} />
+        <Route path="/admin" element={<AdminPage {...toastProp} />} />
         <Route path="/ai-learning" element={<AILearningPage />} />
         <Route path="/profile" element={<ProfilePage {...toastProp} />} />
         <Route path="/about" element={<InformationPage type="about" onBack={() => setPage("home")} />} />
@@ -235,7 +250,9 @@ function AppInner() {
       {/* ── Global overlays ── */}
       <Toast msg={toast.msg} type={toast.type} visible={toast.visible} />
       <LevelUpOverlay data={levelUpData} onClose={clearLevelUp} />
-      <Finn tip={currentTip} onClick={nextTip} />
+      {location.pathname !== "/ai-learning" && (
+        <Finn tip={currentTip} onClick={nextTip} />
+      )}
 
       {/* ── Login Modal ── */}
       {showLogin && <LoginPage onClose={() => setShowLogin(false)} />}
@@ -248,12 +265,12 @@ function AppInner() {
 
 export default function App() {
   return (
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <UserProvider>
           <AppInner />
         </UserProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

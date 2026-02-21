@@ -191,4 +191,68 @@ export const QUESTIONS = [
     explain:
       "Quishing involves replacing legitimate QR codes with malicious ones. The code can lead to a site that looks like a real payment portal but harvests your financial details. Only use official apps or verified payment methods.",
   },
+  {
+    diff: "medium",
+    topic: "MFA Fatigue Attack",
+    scenario: "You receive repeated MFA push approvals at midnight:",
+    img: 'APP ALERTS: "Approve sign-in?" x12 in 2 minutes\nLocation: Unknown browser session',
+    q: "What is the safest response to this MFA spam?",
+    opts: [
+      "Approve once so notifications stop",
+      "Deny all requests, change password, and report suspicious login attempts",
+      "Ignore alerts until morning",
+      "Turn off MFA temporarily",
+    ],
+    correct: 1,
+    explain:
+      "MFA fatigue attacks rely on annoyance to force approval. Deny requests, secure account immediately, and alert your security/admin team.",
+  },
+  {
+    diff: "medium",
+    topic: "Fake Invoice Attachment",
+    scenario: "An unfamiliar vendor emails a high-value invoice:",
+    img: 'FROM: billing@vend0r-payments.com\nATTACHMENT: Invoice_Q1_2026.xlsm\nBODY: "Enable content to view full invoice details."',
+    q: "Which indicator is the strongest malware warning?",
+    opts: [
+      "Invoice amount is high",
+      "Macro-enabled .xlsm file requiring 'Enable content'",
+      "Email has polite wording",
+      "Vendor logo is included",
+    ],
+    correct: 1,
+    explain:
+      "Macro-enabled files can execute malicious code. Never enable macros from unknown or unverified senders.",
+  },
+  {
+    diff: "hard",
+    topic: "Helpdesk Impersonation",
+    scenario: "You get a call claiming to be internal IT support:",
+    img: 'CALLER: "IT Security Desk"\nREQUEST: "Share your VPN OTP now so we can fix your account lock."',
+    q: "How should you verify this request?",
+    opts: [
+      "Share OTP if caller knows your name",
+      "End call and contact IT using official directory/helpdesk channel",
+      "Ask caller to send OTP request in chat and then share",
+      "Share only part of the OTP",
+    ],
+    correct: 1,
+    explain:
+      "OTP is a secret authentication factor and must never be shared. Verify identity through trusted internal channels.",
+  },
+  {
+    diff: "hard",
+    topic: "Cloud Share Permission Scam",
+    scenario: "A document invite asks for elevated cloud permissions:",
+    img: 'Drive App Prompt: "TeamDocs Sync wants full mailbox read + file delete access."\nSender: unknown-collab@externalmail.com',
+    q: "What makes this request malicious?",
+    opts: [
+      "External collaboration is always blocked",
+      "Requested permissions exceed document-sharing need",
+      "Cloud prompts are harmless",
+      "The app name includes Team",
+    ],
+    correct: 1,
+    explain:
+      "Permission scope must match function. Excessive scopes like mailbox read or delete are common in token-stealing OAuth attacks.",
+  },
 ];

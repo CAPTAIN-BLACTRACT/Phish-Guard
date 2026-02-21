@@ -1,5 +1,6 @@
 import './home.css';
 import { useState, useEffect, useRef } from "react";
+import { logPlatformAction } from '../../firebase';
 import { db } from '../../firebase/config';
 import { collection, onSnapshot } from "firebase/firestore";
 import { useAuth } from '../../context/AuthContext';
@@ -166,15 +167,13 @@ export function HomePage({ setPage }) {
               animation: "fuA .6s .3s ease both",
             }}
           >
-            <button style={T.btnHP} onClick={async () => {
-              const { logPlatformAction } = await import("../../firebase/db");
+            <button style={T.btnHP} onClick={() => {
               logPlatformAction(user?.uid, "START_SIMULATOR_HERO");
               setPage("simulator");
             }}>
               ⚡ Start Simulation
             </button>
-            <button style={T.btnHS} onClick={async () => {
-              const { logPlatformAction } = await import("../../firebase/db");
+            <button style={T.btnHS} onClick={() => {
               logPlatformAction(user?.uid, "START_QUIZ_HERO");
               setPage("quiz");
             }}>
@@ -552,11 +551,13 @@ export function HomePage({ setPage }) {
             [
               "Platform",
               [
-                { label: "Simulator", page: "simulator" },
+                { label: "Home", page: "home" },
                 { label: "Quiz", page: "quiz" },
-                { label: "Leaderboard", page: "leaderboard" },
-                { label: "Gallery", page: "gallery" },
+                { label: "Simulator", page: "simulator" },
                 { label: "Neural Academy", page: "ai-learning" },
+                { label: "Leaderboard", page: "leaderboard" },
+                { label: "Progress", page: "progress" },
+                { label: "Gallery", page: "gallery" },
               ],
             ],
             [
@@ -651,45 +652,6 @@ export function HomePage({ setPage }) {
               © 2026 PhishGuard.
             </span>
             {/* Social links removed as requested */}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 9,
-              padding: "5px 13px",
-              background: "rgba(255,23,68,.06)",
-              border: "1px solid rgba(255,23,68,.18)",
-              borderRadius: 3,
-              fontSize: ".7rem",
-              fontFamily: "'Share Tech Mono',monospace",
-              color: "#ff1744",
-              overflow: "hidden",
-              maxWidth: 340,
-            }}
-          >
-            <div
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "#ff1744",
-                boxShadow: "0 0 8px #ff1744",
-                flexShrink: 0,
-                animation: "pulse 1.5s infinite",
-              }}
-            />
-            <div style={{ overflow: "hidden" }}>
-              <span
-                style={{
-                  whiteSpace: "nowrap",
-                  display: "inline-block",
-                  animation: "ticker 14s linear infinite",
-                }}
-              >
-                LIVE: 3.4B phishing emails today · 47,291 new phishing sites detected · Stay vigilant · Never click unverified links
-              </span>
-            </div>
           </div>
         </div>
       </footer>
