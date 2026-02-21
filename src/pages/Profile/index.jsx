@@ -184,6 +184,7 @@ export function ProfilePage({ showToast }) {
                                     style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 12, borderRadius: 4, fontFamily: "inherit" }}
                                     value={formData.displayName}
                                     onChange={e => setFormData({ ...formData, displayName: e.target.value })}
+                                    maxLength={50}
                                     required
                                 />
                             </div>
@@ -194,6 +195,7 @@ export function ProfilePage({ showToast }) {
                                     style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 12, borderRadius: 4, fontFamily: "inherit", minHeight: 100 }}
                                     value={formData.bio}
                                     onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                                    maxLength={500}
                                     placeholder="Identify your defense methodology..."
                                 />
                             </div>

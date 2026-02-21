@@ -17,7 +17,8 @@ export function AdminPage({ showToast }) {
 
     const handleAuth = (e) => {
         e.preventDefault();
-        if (pass === "phishguard2026") setIsAuth(true);
+        const adminKey = import.meta.env.VITE_ADMIN_ACCESS_KEY;
+        if (adminKey && pass === adminKey) setIsAuth(true);
         else showToast("INVALID ACCESS KEY", "ng");
     };
 
@@ -32,6 +33,7 @@ export function AdminPage({ showToast }) {
                         placeholder="ENTER ACCESS KEY"
                         value={pass}
                         onChange={e => setPass(e.target.value)}
+                        maxLength={32}
                         style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,245,255,0.2)", color: "#fff", padding: 12, borderRadius: 4, textAlign: "center", fontFamily: "Share Tech Mono", marginBottom: 20 }}
                     />
                     <button type="submit" style={T.btnHP}>INITIALIZE SESSION</button>
