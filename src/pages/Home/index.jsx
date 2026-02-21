@@ -23,9 +23,15 @@ export function HomePage({ setPage }) {
 
   useEffect(() => {
     // Dynamic recruit count from Firestore
-    const unsub = onSnapshot(collection(db, "users"), (snap) => {
-      if (!snap.empty) setRecruitCount(12482 + snap.size);
-    });
+    const unsub = onSnapshot(
+      collection(db, "users"),
+      (snap) => {
+        if (!snap.empty) setRecruitCount(12482 + snap.size);
+      },
+      (error) => {
+        console.warn("Users snapshot failed on Home:", error?.code || error?.message || error);
+      }
+    );
     return () => unsub();
   }, []);
 

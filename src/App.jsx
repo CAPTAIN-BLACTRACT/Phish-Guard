@@ -135,8 +135,14 @@ function AppInner() {
   const { profile } = useUser();
 
   useEffect(() => {
-    seedDatabase();
-  }, []);
+    if (!user?.uid) return;
+    seedDatabase({
+      uid: user.uid,
+      displayName: user.displayName || null,
+      email: user.email || null,
+      photoURL: user.photoURL || null,
+    });
+  }, [user?.uid]);
 
   const { xp, level, addXP, xpPct, xpToNext,
     levelUpData, clearLevelUp } = useXPSystem(

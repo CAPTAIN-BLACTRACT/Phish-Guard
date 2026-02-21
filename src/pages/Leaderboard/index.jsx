@@ -35,27 +35,45 @@ export function LeaderboardPage() {
     const usersQuery = query(collection(db, "users"), orderBy("xp", "desc"), limit(20));
     const seedQuery = query(collection(db, "leaderboardSeed"), orderBy("xp", "desc"), limit(20));
 
-    const unsubUsers = onSnapshot(usersQuery, (snap) => {
-      userRows = snap.docs.map((row, idx) => ({
-        id: row.id,
-        rank: idx + 1,
-        ...row.data(),
-        isYou: row.id === user?.uid,
-      }));
-      usersLoaded = true;
-      applyRows();
-    });
+    const unsubUsers = onSnapshot(
+      usersQuery,
+      (snap) => {
+        userRows = snap.docs.map((row, idx) => ({
+          id: row.id,
+          rank: idx + 1,
+          ...row.data(),
+          isYou: row.id === user?.uid,
+        }));
+        usersLoaded = true;
+        applyRows();
+      },
+      (error) => {
+        console.warn("Leaderboard users listener failed:", error?.code || error?.message || error);
+        usersLoaded = true;
+        userRows = [];
+        applyRows();
+      }
+    );
 
-    const unsubSeed = onSnapshot(seedQuery, (snap) => {
-      seedRows = snap.docs.map((row, idx) => ({
-        id: row.id,
-        rank: idx + 1,
-        ...row.data(),
-        isYou: false,
-      }));
-      seedLoaded = true;
-      applyRows();
-    });
+    const unsubSeed = onSnapshot(
+      seedQuery,
+      (snap) => {
+        seedRows = snap.docs.map((row, idx) => ({
+          id: row.id,
+          rank: idx + 1,
+          ...row.data(),
+          isYou: false,
+        }));
+        seedLoaded = true;
+        applyRows();
+      },
+      (error) => {
+        console.warn("Leaderboard seed listener failed:", error?.code || error?.message || error);
+        seedLoaded = true;
+        seedRows = [];
+        applyRows();
+      }
+    );
 
     return () => {
       unsubUsers();
