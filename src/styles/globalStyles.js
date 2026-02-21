@@ -14,7 +14,7 @@ export const GLOBAL_CSS = `
     --purple: #d500f9;
     --gold:   #ffd600;
     --txt:    #e0f7fa;
-    --txt2:   #b0bec5;
+    --txt2:   #546e7a;
     --glow:   rgba(0,245,255,0.25);
   }
 
@@ -27,7 +27,6 @@ export const GLOBAL_CSS = `
     color: var(--txt);
     overflow-x: hidden;
     font-size: 16px;
-    cursor: crosshair;
   }
 
   #root { min-height: 100vh; }
@@ -106,8 +105,8 @@ export const GLOBAL_CSS = `
     100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
   }
   @keyframes turtleBob {
-    from { transform: translateY(0); }
-    to   { transform: translateY(-6px); }
+    0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.2)); }
+    50%      { transform: translateY(-12px) scale(1.02); filter: drop-shadow(0 0 20px rgba(0, 245, 255, 0.5)); }
   }
   @keyframes ticker {
     0%   { transform: translateX(100%); }

@@ -1,3 +1,5 @@
+import { T } from "../styles";
+
 /**
  * XPBar
  * Reusable XP progress bar with level label and "to-next" counter.
@@ -34,12 +36,8 @@ export function XPBar({ xp, level, xpPct, xpToNext }) {
       >
         <div
           style={{
-            height:     "100%",
-            background: "linear-gradient(90deg,#00f5ff,#00ff9d)",
-            borderRadius: 2,
+            ...T.xpBarFill,
             width:      `${xpPct()}%`,
-            boxShadow:  "0 0 12px #00f5ff",
-            transition: "width .6s",
           }}
         />
       </div>

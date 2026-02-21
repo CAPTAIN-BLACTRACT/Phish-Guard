@@ -122,6 +122,12 @@ const defaultSeedName = (uid) => `Agent_${String(uid).slice(0, 5).toUpperCase()}
 const defaultSeedAvatar = (uid) =>
   `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(uid)}`;
 
+const isPermissionDenied = (err) => {
+  const code = String(err?.code || "").toLowerCase();
+  const message = String(err?.message || "").toLowerCase();
+  return code.includes("permission-denied") || message.includes("insufficient permissions");
+};
+
 async function isCollectionEmpty(name) {
   const snap = await getDocs(query(collection(db, name), limit(1)));
   return snap.empty;
@@ -333,6 +339,10 @@ export async function seedDatabase(seedUser = null) {
     console.log("Database seeded:", summary);
     return summary;
   } catch (err) {
+    if (isPermissionDenied(err)) {
+      console.info("Seed skipped: Firestore rules do not allow client-side seed writes.");
+      return summary;
+    }
     console.error("Error seeding database:", err);
     return summary;
   }

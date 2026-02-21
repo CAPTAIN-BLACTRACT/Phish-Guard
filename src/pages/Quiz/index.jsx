@@ -187,18 +187,29 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
       ? (q.diff === "easy" ? 50 : q.diff === "medium" ? 100 : 150)
       : 10;
 
-    await awardXP(xpGain, {
-      reason: "QUIZ_ANSWER",
-      metadata: {
-        questionId: q.id || qIdx,
-        topic: q.topic || "general",
-        difficulty: q.diff,
-        correct,
-        score: correct ? 1 : 0,
-        total: 1,
-        formula: correct ? "difficulty-based reward" : "incorrect-answer baseline",
-      },
-    });
+    // Update local quiz progression immediately so UI never blocks on backend writes.
+    setHistory((h) => [...h, { idx: qIdx, correct }]);
+    showToast(
+      correct ? `🎯 Correct! +${xpGain} XP earned!` : "❌ Not quite. Read the explanation below.",
+      correct ? "ok" : "ng"
+    );
+
+    try {
+      await awardXP(xpGain, {
+        reason: "QUIZ_ANSWER",
+        metadata: {
+          questionId: q.id || qIdx,
+          topic: q.topic || "general",
+          difficulty: q.diff,
+          correct,
+          score: correct ? 1 : 0,
+          total: 1,
+          formula: correct ? "difficulty-based reward" : "incorrect-answer baseline",
+        },
+      });
+    } catch (e) {
+      console.warn("XP sync failed:", e);
+    }
 
     if (user) {
       try {
@@ -230,12 +241,6 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
         }
       }
     }
-
-    setHistory((h) => [...h, { idx: qIdx, correct }]);
-    showToast(
-      correct ? `🎯 Correct! +${xpGain} XP earned!` : "❌ Not quite. Read the explanation below.",
-      correct ? "ok" : "ng"
-    );
   };
 
   // ── Next question ──────────────────────────────────────────────────────────

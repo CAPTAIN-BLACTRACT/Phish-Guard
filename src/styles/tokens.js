@@ -106,11 +106,11 @@ export const page = css({
   position: "relative",
   zIndex: 1,
   minHeight: "100vh",
-  paddingTop: 40,
+  paddingTop: 64,
 });
 
 export const sec = css({
-  padding: "40px 24px",
+  padding: "80px 80px",
   position: "relative",
   zIndex: 1,
 });
@@ -152,11 +152,11 @@ export const nav = css({
   left: 0,
   right: 0,
   zIndex: 1000,
-  height: 60,
+  height: 64,
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "0 24px",
+  padding: "0 40px",
   background: "rgba(0,5,9,0.94)",
   backdropFilter: "blur(24px)",
   borderBottom: "1px solid rgba(0,245,255,.15)",
@@ -175,3 +175,13 @@ export const logo = css({
   letterSpacing: "0.08em",
   animation: "glitch 8s infinite",
 });
+
+export const xpBarFill = {
+  height: "100%",
+  background: "linear-gradient(90deg, #00f5ff, #d500f9, #00f5ff)",
+  backgroundSize: "200% 100%",
+  borderRadius: 100,
+  boxShadow: "0 0 15px rgba(0, 245, 255, 0.6), 0 0 5px rgba(213, 0, 249, 0.4)",
+  transition: "width 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
+  animation: "glowFlow 3s linear infinite",
+};
