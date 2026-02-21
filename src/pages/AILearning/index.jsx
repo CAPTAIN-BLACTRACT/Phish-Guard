@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { T } from "../../styles";
 import { MODULES } from "../../constants";
 import { useAuth, useUser } from "../../context";
 import { useToast } from "../../hooks/useToast";
-import { Turtle } from "../../components/Turtle";
+import { Finn } from "../../components";
 import {
     logPlatformAction,
     saveTrainingModuleProgress,
@@ -65,7 +65,7 @@ export function AILearningPage() {
     const [chatMessages, setChatMessages] = useState([
         {
             role: "ai",
-            text: "Sheldon AI online. Ask for phishing analysis, training tips, or response playbooks.",
+            text: "Finn AI online. Ask for phishing analysis, training tips, or response playbooks.",
         },
     ]);
     const chatEndRef = useRef(null);
@@ -227,7 +227,7 @@ export function AILearningPage() {
                                     parts: [
                                         {
                                             text:
-                                                "You are Sheldon AI, a cybersecurity trainer focused on phishing defense. " +
+                                                "You are Finn AI, a cybersecurity trainer focused on phishing defense. " +
                                                 "Give practical and concise advice. User query: " +
                                                 prompt,
                                         },
@@ -373,7 +373,7 @@ export function AILearningPage() {
                         backdropFilter: "blur(20px)",
                     }}
                 >
-                    <div style={{ fontSize: "3.5rem", marginBottom: 16 }}>🐢</div>
+                    <div style={{ fontSize: "3.5rem", marginBottom: 16 }}>ðŸ¢</div>
                     <div
                         style={{
                             fontFamily: "Orbitron, sans-serif",
@@ -465,7 +465,7 @@ export function AILearningPage() {
                                             </span>
                                         </div>
                                         <div style={{ fontSize: "0.7rem", marginTop: 6, color: "var(--txt2)" }}>
-                                            {module.time} · {module.diff}
+                                            {module.time} Â· {module.diff}
                                         </div>
                                     </button>
                                 );
@@ -624,7 +624,7 @@ export function AILearningPage() {
                 >
                     <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(0,245,255,0.16)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <span style={{ fontFamily: "Share Tech Mono, monospace", color: "#00f5ff", fontSize: "0.75rem", letterSpacing: "0.08em" }}>
-                            SHELDON COMPANION
+                            FINN COMPANION
                         </span>
                         <button onClick={() => setChatOpen(false)} style={{ ...T.btnG, padding: "4px 10px", fontSize: "0.72rem" }}>
                             Close
@@ -652,7 +652,7 @@ export function AILearningPage() {
                         ))}
                         {chatLoading && (
                             <div style={{ color: "#00f5ff", fontFamily: "Share Tech Mono, monospace", fontSize: "0.72rem" }}>
-                                Sheldon AI is analyzing...
+                                Finn AI is analyzing...
                             </div>
                         )}
                         <div ref={chatEndRef} />
@@ -709,14 +709,12 @@ export function AILearningPage() {
                 </div>
             )}
 
-            <Turtle
-                tip={
-                    chatOpen
-                        ? "Sheldon is helping you with this module."
-                        : `Need help with ${selectedModule?.name}? Tap me to open AI chat.`
-                }
-                onClick={() => setChatOpen((v) => !v)}
-            />
+            {!chatOpen && (
+                <Finn
+                    tip={`Need help with ${selectedModule?.name}? Tap me to open AI chat.`}
+                    onClick={() => setChatOpen(true)}
+                />
+            )}
 
             <style>{`
                 @media (max-width: 900px) {
@@ -731,3 +729,4 @@ export function AILearningPage() {
         </div>
     );
 }
+
