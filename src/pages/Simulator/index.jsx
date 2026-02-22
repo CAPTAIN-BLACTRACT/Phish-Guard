@@ -118,8 +118,8 @@ export function SimulatorPage({ showToast }) {
       3. Give a risk level (LOW/MED/HIGH/CRITICAL).
       4. Suggest safe actions.
     `;
-    const result = await callGemini(prompt, "You are an Elite Phishing Analyst. Provide a structured report.");
-    setAnalysisResult(result);
+    const result = await callGemini(prompt, "You are an Elite Phishing Analyst. Provide a structured report using PLAIN TEXT ONLY. Do not use markdown like **bold** or ## headers. Use simple bullet points if needed.");
+    setAnalysisResult(result.replace(/\*\*|\#\#/g, ""));
     awardXP(10); // Reward for using the lab
     showToast("Email Analysis Complete! +10 XP", "ok");
   };
@@ -130,8 +130,8 @@ export function SimulatorPage({ showToast }) {
     setAnalysisResult("SCANNING_URL_FOR_THREATS...");
 
     const prompt = `Analyze this URL for potential phishing: ${urlInput}`;
-    const result = await callGemini(prompt, "Analyze the URL structure, TLD, and common typosquatting patterns. Verdict first.");
-    setAnalysisResult(result);
+    const result = await callGemini(prompt, "Analyze the URL structure, TLD, and common typosquatting patterns. Verdict first. Use PLAIN TEXT ONLY, no markdown.");
+    setAnalysisResult(result.replace(/\*\*|\#\#/g, ""));
     awardXP(5); // Reward for using the lab
     showToast("URL Scan Complete! +5 XP", "ok");
   };
