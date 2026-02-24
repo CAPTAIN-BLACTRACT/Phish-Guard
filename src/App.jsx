@@ -185,6 +185,8 @@ function AppInner() {
           .cards-grid { grid-template-columns: 1fr !important; }
           .stat-grid  { grid-template-columns: 1fr 1fr !important; }
           .pg-container { padding: 0 1rem !important; }
+          .sentinel-grid { grid-template-columns: 1fr !important; }
+          .sentinel-section { padding: 40px 20px !important; }
           .pwa-banner { 
             width: 92%; 
             max-width: 400px;

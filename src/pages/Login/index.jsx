@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from '../../context';
+import { useAuth } from '../../context/AuthContext';
 import { T } from '../../styles';
 
 export default function LoginPage({ onClose }) {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { T } from "../styles";
-import { useAuth, useUser } from "../context";
+import { useAuth } from "../context/AuthContext";
+import { useUser } from "../context/UserContext";
 
 const MAIN_LINKS = [
   { id: "neural-academy", label: "Neural Academy", icon: "🤖" },

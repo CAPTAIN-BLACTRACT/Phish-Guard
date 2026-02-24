@@ -1,6 +1,10 @@
 import './home.css';
+import { useState, useEffect, useRef } from "react";
 import { logPlatformAction } from '../../firebase';
-import { useAuth } from '../../context';
+import { db } from '../../firebase/config';
+import { collection, onSnapshot } from "firebase/firestore";
+import { useAuth } from '../../context/AuthContext';
+import { useUser } from '../../context/UserContext';
 
 import {
   EmailMock,
@@ -14,7 +18,16 @@ import { T } from '../../components/home/styles';
 import { RED_FLAGS } from '../../components/home/constants';
 
 export function HomePage({ setPage }) {
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
+  const [recruitCount, setRecruitCount] = useState(12482);
+
+  useEffect(() => {
+    // Dynamic recruit count from Firestore
+    const unsub = onSnapshot(collection(db, "users"), (snap) => {
+      if (!snap.empty) setRecruitCount(12482 + snap.size);
+    });
+    return () => unsub();
+  }, []);
 
   return (
     <div className="pg-grid-bg" style={{ ...T.page, background: "transparent", paddingTop: 60 }}>
@@ -182,7 +195,7 @@ export function HomePage({ setPage }) {
             <StatDivider />
             <StatItem num="92%" lbl="Malware via email" />
             <StatDivider />
-            <StatItem num={`${RED_FLAGS.length}`} lbl="Core phishing red flags" />
+            <StatItem num={`${(recruitCount / 1000).toFixed(1)}K+`} lbl="Users trained" />
           </div>
         </div>
 
@@ -268,7 +281,7 @@ export function HomePage({ setPage }) {
       {/* ── QUICK NAV CARDS ── */}
       <section
         className="section-pad"
-        style={{ padding: "44px 80px", position: "relative", zIndex: 2 }}
+        style={{ padding: "60px 80px", position: "relative", zIndex: 2 }}
       >
         <div
           className="nav-cards-grid"
@@ -289,11 +302,52 @@ export function HomePage({ setPage }) {
           ))}
         </div>
       </section>
+
+
+
+      {/* ── SENTINEL EXTENSION SECTION ── */}
+      <section className="sentinel-section" style={{ padding: "80px 20px", position: "relative", zIndex: 2, overflow: "hidden" }}>
+        <div style={{
+          display: "flex", flexDirection: "column", gap: 30, alignItems: "flex-start",
+          background: "linear-gradient(135deg, rgba(0,245,255,0.03), transparent)",
+          border: "1px solid rgba(0,245,255,0.1)", borderRadius: 12, padding: "clamp(20px, 5vw, 60px)",
+          maxWidth: 900, margin: "0 auto"
+        }}>
+          <div>
+            <div style={T.secLbl}>// REAL-TIME PROTECTION</div>
+            <h2 style={{ ...T.secTitle, fontSize: "clamp(1.5rem, 6vw, 2.5rem)", marginBottom: 20 }}>
+              PhishGuard <span style={{ color: "#00f5ff" }}>Sentinel</span>
+            </h2>
+            <p style={{ color: "var(--txt2)", fontSize: "clamp(0.9rem, 2vw, 1.1rem)", lineHeight: 1.8, marginBottom: 30 }}>
+              Bring our defense grid to your browser. PhishGuard Sentinel scans every URL you visit, detecting typosquats, homograph attacks, and insecure credential leaks before they harm you.
+            </p>
+            <div className="sentinel-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 40 }}>
+              {[
+                { i: "🛡️", t: "Live Filtering", d: "Block malicious scripts on the fly." },
+                { i: "🔍", t: "URL Analysis", d: "Deep inspect suspicious domains." },
+                { i: "⚠️", t: "Alert System", d: "Instant warnings on threat detection." },
+                { i: "📊", t: "Threat Logs", d: "Keep track of scanned sites." },
+              ].map(f => (
+                <div key={f.t} style={{ display: "flex", gap: 12 }}>
+                  <span style={{ fontSize: "1.5rem" }}>{f.i}</span>
+                  <div>
+                    <div style={{ color: "#00f5ff", fontWeight: 700, fontSize: "0.9rem" }}>{f.t}</div>
+                    <div style={{ color: "var(--txt2)", fontSize: "0.75rem" }}>{f.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button style={{ ...T.btnHP, fontSize: "1rem", padding: "15px 40px", width: "100%", maxWidth: "300px" }}>INSTALL SENTINEL ➔</button>
+          </div>
+        </div>
+      </section>
+
+
       {/* ── RED FLAGS ── */}
       <section
         className="section-pad"
         style={{
-          padding: "56px 80px",
+          padding: "80px 80px",
           background: "linear-gradient(180deg,transparent,rgba(0,8,18,.6),transparent)",
           position: "relative",
           zIndex: 2,
@@ -520,6 +574,7 @@ export function HomePage({ setPage }) {
                 { label: "Checklist PDF", page: "checklist" },
                 { label: "Report Phishing", page: "gallery" },
                 { label: "FAQ", page: "faq" },
+                { label: "CISA Guidance", page: "about" },
               ],
             ],
           ].map(([title, items]) => (
@@ -594,7 +649,7 @@ export function HomePage({ setPage }) {
                 flexShrink: 0,
               }}
             >
-              © 2026 PhishGuard | Binary Beast Team.
+              © 2026 PhishGuard.
             </span>
             {/* Social links removed as requested */}
           </div>

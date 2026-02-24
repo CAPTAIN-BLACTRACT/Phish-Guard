@@ -4,6 +4,7 @@ import { XPBar } from '../../components';
 import { QUESTIONS } from '../../constants';
 import { saveQuizResult, signInGuest, logPlatformAction, getAdminQuizQuestions } from '../../firebase';
 import { useUser, useAuth } from '../../context';
+import { useGemini } from '../../hooks';
 
 const QUIZ_LIMIT = 15;
 
@@ -44,6 +45,8 @@ function normalizeQuizQuestion(raw, idx) {
 
 // ─── QUIZ PAGE ────────────────────────────────────────────────────────────────
 export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [quizMode, setQuizMode] = useState(null); // 'easy', 'medium', 'hard', 'adaptive'
   const [qIdx, setQIdx] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -52,10 +55,12 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
   const [questionBank, setQuestionBank] = useState(() => QUESTIONS.map(normalizeQuizQuestion));
   const [contentSource, setContentSource] = useState("local");
   const timerRef = useRef(null);
+  const { callGemini, loading: aiLoading } = useGemini();
 
+  // Logic for total questions: Adaptive is infinite (null), others are fixed at 10.
+  const TOTAL_QUESTIONS = quizMode === 'adaptive' ? Infinity : 10;
   const totalQuestionsInBank = questionBank.length || 1;
-  const TOTAL_QUESTIONS = Math.min(QUIZ_LIMIT, totalQuestionsInBank);
-  const questionNumber = Math.min(history.length + 1, TOTAL_QUESTIONS);
+  const questionNumber = history.length + 1;
   const q = questionBank[qIdx % totalQuestionsInBank] || normalizeQuizQuestion({}, 0);
 
   // ── Timer ──────────────────────────────────────────────────────────────────
@@ -109,6 +114,30 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
     return selectedIdx >= 0 ? selectedIdx : (prevIdx + 1) % totalQuestionsInBank;
   };
 
+  const fetchNeuralQuestion = async (difficulty) => {
+    const prompt = `Generate a unique phishing detection quiz question for difficulty: ${difficulty}. 
+    Return ONLY a JSON object with this structure:
+    {
+      "topic": "category name",
+      "scenario": "brief context",
+      "img": "the phishing email/message text",
+      "q": "the question",
+      "opts": ["option 0", "option 1", "option 2", "option 3"],
+      "correct": index_of_correct_option,
+      "explain": "detailed explanation"
+    }`;
+    
+    try {
+      const result = await callGemini(prompt, "You are a professional cybersecurity quiz generator. Output valid JSON only.");
+      const jsonStr = result.replace(/```json|```/g, "").trim();
+      const data = JSON.parse(jsonStr);
+      return normalizeQuizQuestion({ ...data, diff: difficulty, id: `neural-${Date.now()}` }, history.length);
+    } catch (err) {
+      console.error("Neural fetch failed:", err);
+      return null;
+    }
+  };
+
   const { awardXP, updateStreak } = useUser();
   const { user } = useAuth();
 
@@ -144,6 +173,29 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
     return () => { mounted = false; };
   }, [user?.uid]);
 
+  useEffect(() => {
+    if (quizStarted && history.length === 0) {
+      if (quizMode === 'adaptive') {
+        // AI Fetch for adaptive
+        fetchNeuralQuestion(currentDiff).then(newQ => {
+          if (newQ) {
+            setQuestionBank([newQ]);
+            setQIdx(0);
+          }
+        });
+      } else {
+        // DB Pick for Easy/Medium/Hard
+        const pool = questionBank.filter(item => item.diff === quizMode);
+        if (pool.length > 0) {
+          const randomIdx = Math.floor(Math.random() * pool.length);
+          const selectedQ = pool[randomIdx];
+          const globalIdx = questionBank.findIndex(item => item.id === selectedQ.id);
+          setQIdx(globalIdx >= 0 ? globalIdx : 0);
+        }
+      }
+    }
+  }, [quizStarted, quizMode]);
+
   // ── Sign-in gate ────────────────────────────────────────────────────────────
   if (!user) {
     return (
@@ -155,6 +207,55 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <button style={{ ...T.btnHP, minWidth: 160 }} onClick={() => document.querySelector('.pg-login-btn')?.click?.()}>🔐 Sign In</button>
             <button style={{ ...T.btnG }} onClick={signInGuest}>👤 Continue as Guest</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!quizStarted) {
+    return (
+      <div style={{ ...T.page, background: "transparent", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center", padding: 40, maxWidth: 750, background: "rgba(0,8,18,0.85)", border: "1px solid rgba(0,245,255,0.15)", borderRadius: 16, backdropFilter: "blur(20px)" }}>
+          <div style={{ fontSize: "3.5rem", marginBottom: 16 }}>🎮</div>
+          <div style={{ fontFamily: "Orbitron, sans-serif", fontSize: "1.6rem", fontWeight: 800, marginBottom: 12, color: "#00f5ff" }}>Select Training Protocol</div>
+          <p style={{ color: "var(--txt2)", fontSize: "0.9rem", lineHeight: 1.7, marginBottom: 32 }}>Neural AI will generate dynamic, unique challenges based on your selected protocol.</p>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+            {/* Fixed Difficulty Options */}
+            {['easy', 'medium', 'hard'].map((d) => (
+              <button 
+                key={d}
+                onClick={() => {
+                  setCurrentDiff(d);
+                  setQuizMode(d);
+                  setQuizStarted(true);
+                }}
+                style={{ ...T.card, padding: 24, cursor: "pointer", border: "1px solid rgba(0,245,255,0.2)", transition: "all 0.3s", textAlign: "center" }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00f5ff"}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = "rgba(0,245,255,0.2)"}
+              >
+                <div style={{ fontSize: "1.8rem", marginBottom: 10 }}>📡</div>
+                <div style={{ fontFamily: "Orbitron", color: "#00f5ff", marginBottom: 8 }}>{d.toUpperCase()}</div>
+                <div style={{ fontSize: "0.7rem", color: "var(--txt2)" }}>Fixed difficulty AI scenarios.</div>
+              </button>
+            ))}
+
+            {/* Adaptive Mode */}
+            <button 
+              onClick={() => {
+                setCurrentDiff('easy');
+                setQuizMode('adaptive');
+                setQuizStarted(true);
+              }}
+              style={{ ...T.card, padding: 24, cursor: "pointer", border: "1px solid rgba(213,0,249,0.3)", background: "rgba(213,0,249,0.05)", transition: "all 0.3s", textAlign: "center" }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = "#d500f9"}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = "rgba(213,0,249,0.3)"}
+            >
+              <div style={{ fontSize: "1.8rem", marginBottom: 10 }}>🧠</div>
+              <div style={{ fontFamily: "Orbitron", color: "#d500f9", marginBottom: 8 }}>ADAPTIVE</div>
+              <div style={{ fontSize: "0.7rem", color: "var(--txt2)" }}>AI adjusts difficulty based on your performance.</div>
+            </button>
           </div>
         </div>
       </div>
@@ -197,6 +298,8 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
           score: correct ? 1 : 0,
           total: 1,
           category: q.topic || "general",
+          mode: quizMode,
+          timestamp: new Date().toISOString()
         });
         await updateStreak();  // from UserContext
         await logPlatformAction(user.uid, "QUIZ_ANSWERED", {
@@ -216,21 +319,68 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
   };
 
   // ── Next question ──────────────────────────────────────────────────────────
-  const next = () => {
-    if (history.length >= TOTAL_QUESTIONS) {
-      showToast("🏆 Quiz complete! Well done!", "ok");
-      setQIdx(0); setHistory([]); setAnswered(false); setSelected(null);
-      setCurrentDiff("easy"); setConsecutiveCorrect(0);
-    } else {
-      const lastAttempt = history[history.length - 1];
-      const wasCorrect = typeof lastAttempt?.correct === "boolean"
-        ? lastAttempt.correct
-        : selected === q.correct;
-      const nextQIdx = getNextQuestion(qIdx, Boolean(wasCorrect));
-      setQIdx(nextQIdx);
-      setAnswered(false);
-      setSelected(null);
+  const next = async () => {
+    // Check if finished (for non-infinite modes)
+    if (quizMode !== 'adaptive' && history.length >= TOTAL_QUESTIONS) {
+      finishQuiz();
+      return;
     }
+
+    const lastAttempt = history[history.length - 1];
+    const wasCorrect = typeof lastAttempt?.correct === "boolean"
+      ? lastAttempt.correct
+      : selected === q.correct;
+    
+    if (quizMode === 'adaptive') {
+      // AI Fetch
+      const nextDiff = getNextDiff(wasCorrect);
+      setCurrentDiff(nextDiff);
+      const neuralQ = await fetchNeuralQuestion(nextDiff);
+      if (neuralQ) {
+        setQuestionBank(prev => [...prev, neuralQ]);
+        setQIdx(questionBank.length); 
+      } else {
+        // Fallback to local if AI fails
+        const nextLocalIdx = getNextQuestion(qIdx, wasCorrect);
+        setQIdx(nextLocalIdx);
+      }
+    } else {
+      // DB Pick: Next random question from same difficulty pool
+      const pool = questionBank.filter(item => item.diff === quizMode);
+      if (pool.length > 0) {
+        const randomIdx = Math.floor(Math.random() * pool.length);
+        const selectedQ = pool[randomIdx];
+        const globalIdx = questionBank.findIndex(item => item.id === selectedQ.id);
+        setQIdx(globalIdx >= 0 ? globalIdx : (qIdx + 1) % totalQuestionsInBank);
+      } else {
+        setQIdx((qIdx + 1) % totalQuestionsInBank);
+      }
+    }
+    
+    setAnswered(false);
+    setSelected(null);
+  };
+
+  const finishQuiz = () => {
+    showToast("🏆 Training protocol complete!", "ok");
+    setQuizStarted(false);
+    setQuizMode(null);
+    setQIdx(0); setHistory([]); setAnswered(false); setSelected(null);
+    setCurrentDiff("easy"); setConsecutiveCorrect(0);
+  };
+
+  // Helper for difficulty adjustment in neural mode
+  const getNextDiff = (wasCorrect) => {
+    let newDiff = currentDiff;
+    let newStreak = wasCorrect ? consecutiveCorrect + 1 : 0;
+    if (wasCorrect && newStreak >= 2) {
+      if (currentDiff === "easy") newDiff = "medium";
+      else if (currentDiff === "medium") newDiff = "hard";
+    } else if (!wasCorrect) {
+      if (currentDiff === "hard") newDiff = "medium";
+      else if (currentDiff === "medium") newDiff = "easy";
+    }
+    return newDiff;
   };
 
   // ── Timer ring visuals ─────────────────────────────────────────────────────
@@ -262,12 +412,20 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
 
       {/* ── Page content ── */}
       <div className="pg-container" style={{ position: "relative", zIndex: 2, maxWidth: 880, margin: "0 auto", padding: "80px 24px 60px" }}>
+        
+        {aiLoading && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,8,18,0.9)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backdropFilter: "blur(10px)" }}>
+            <div style={{ fontSize: "4rem", animation: "orbF 2s infinite" }}>🧠</div>
+            <div style={{ fontFamily: "Orbitron", color: "#00f5ff", marginTop: 20, letterSpacing: 2 }}>NEURAL_PROCESSING_IN_PROGRESS...</div>
+            <div style={{ fontFamily: "Share Tech Mono", color: "var(--txt2)", marginTop: 10, fontSize: "0.8rem" }}>Generating unique difficulty-adaptive scenario</div>
+          </div>
+        )}
 
         {/* ── Top bar ── */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <span style={{ fontFamily: "Share Tech Mono, monospace", fontSize: ".78rem", color: "var(--txt2)" }}>
-              Question {questionNumber} of {TOTAL_QUESTIONS}
+              Question {questionNumber} {quizMode !== 'adaptive' && `of ${TOTAL_QUESTIONS}`}
             </span>
             <span style={{
               padding: "4px 12px", borderRadius: 100,
@@ -284,11 +442,19 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
               border: "1px solid rgba(0,245,255,0.3)",
               color: "#00f5ff",
             }}>
-              {contentSource === "backend" ? "BACKEND CONTENT" : "LOCAL CONTENT"}
+              {quizMode === 'adaptive' ? "NEURAL ENGINE" : "ACADEMY DB"}
             </span>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            {quizMode === 'adaptive' && (
+              <button 
+                onClick={finishQuiz}
+                style={{ ...T.btnG, padding: "6px 12px", fontSize: "0.7rem", borderColor: "rgba(255,23,68,0.3)", color: "#ff1744" }}
+              >
+                🛑 END PROTOCOL
+              </button>
+            )}
             {/* SVG timer ring */}
             <div style={{ position: "relative", width: 48, height: 48 }}>
               <svg
@@ -405,7 +571,7 @@ export function QuizPage({ xp, level, xpPct, xpToNext, addXP, showToast }) {
 
           {/* Progress dots */}
           <div style={{ display: "flex", gap: 5, marginTop: 22 }}>
-            {Array.from({ length: TOTAL_QUESTIONS }).map((_, i) => {
+            {Array.from({ length: quizMode === 'adaptive' ? 0 : TOTAL_QUESTIONS }).map((_, i) => {
               const activeDotIdx = Math.max(0, questionNumber - 1);
               const h = history[i];
               const bg = h ? (h.correct ? "#00f5ff" : "#ff1744") : i === activeDotIdx ? "#00ff9d" : "rgba(255,255,255,.1)";

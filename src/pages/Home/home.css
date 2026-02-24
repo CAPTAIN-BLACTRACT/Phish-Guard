@@ -95,6 +95,7 @@ body {
   .nav-links-row { display: none !important; }
   .section-pad { padding: 40px 24px !important; }
   .flags-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .sentinel-section > div { grid-template-columns: 1fr !important; }
 }
 
 @media (max-width:600px) {

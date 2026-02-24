@@ -448,10 +448,10 @@ export function AILearningPage() {
                             style={{ ...T.btnHP, minWidth: 150 }}
                             onClick={() => document.querySelector(".pg-login-btn")?.click?.()}
                         >
-                            🔐 Sign In
+                            Sign In
                         </button>
-                        <button style={{ ...T.btnG, minWidth: 150 }} onClick={signInGuest}>
-                            👤 Continue as Guest
+                        <button style={{ ...T.btnG }} onClick={signInGuest}>
+                            Continue as Guest
                         </button>
                     </div>
                 </div>
